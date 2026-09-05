@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+wall_layout.png
+converted.json
