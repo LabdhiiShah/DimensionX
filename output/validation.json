@@ -1,0 +1,13 @@
+{
+  "validation_passed": true,
+  "blocking_error_count": 0,
+  "warning_count": 1,
+  "blocking_errors": [],
+  "warnings": [
+    {
+      "category": "SEMANTICS",
+      "code": "UNASSIGNED_ROOM_LABELS",
+      "message": "10 room polygons lack explicit DXF text callouts and were designated UNKNOWN_SPACE."
+    }
+  ]
+}

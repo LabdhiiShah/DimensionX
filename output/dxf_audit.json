@@ -1,0 +1,1172 @@
+{
+  "file_info": {
+    "filepath": "d:\\end game\\dwg\\sample1.dxf",
+    "filename": "sample1.dxf",
+    "file_size_bytes": 633342
+  },
+  "header": {
+    "INSUNITS_code": 0,
+    "INSUNITS_description": "Unspecified",
+    "INSBASE": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "EXTMIN": [
+      85748.62698055233,
+      12957.72821161953,
+      -89665.88688452914
+    ],
+    "EXTMAX": [
+      268739.7031051442,
+      19927.21637488068,
+      59443.27258156327
+    ],
+    "MEASUREMENT": 0,
+    "LUNITS": 4
+  },
+  "layers": {
+    "0": {
+      "name": "0",
+      "color": 252,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 7
+    },
+    "WALL": {
+      "name": "WALL",
+      "color": 7,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 33
+    },
+    "DEFPOINTS": {
+      "name": "DEFPOINTS",
+      "color": 4,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 0
+    },
+    "DIM": {
+      "name": "DIM",
+      "color": 7,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 548
+    },
+    "FURINTURE": {
+      "name": "FURINTURE",
+      "color": 7,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 31
+    },
+    "BEAM": {
+      "name": "BEAM",
+      "color": 251,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 1
+    },
+    "FUNIRUTURE": {
+      "name": "FUNIRUTURE",
+      "color": 7,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 2
+    },
+    "ELEVA": {
+      "name": "ELEVA",
+      "color": 8,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 3
+    },
+    "TAXT": {
+      "name": "TAXT",
+      "color": 7,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 13
+    },
+    "BASEPLAN$0$WALL": {
+      "name": "BASEPLAN$0$WALL",
+      "color": 8,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 0
+    },
+    "BASEPLAN$0$PARKING": {
+      "name": "BASEPLAN$0$PARKING",
+      "color": 8,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 0
+    },
+    "BASEPLAN$0$4": {
+      "name": "BASEPLAN$0$4",
+      "color": 8,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 0
+    },
+    "HATCH": {
+      "name": "HATCH",
+      "color": 252,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 85
+    },
+    "ELE": {
+      "name": "ELE",
+      "color": 7,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 8
+    },
+    "BLDGTEXT": {
+      "name": "BLDGTEXT",
+      "color": 7,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 6
+    },
+    "WIN_GL": {
+      "name": "WIN_GL",
+      "color": 142,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 3
+    },
+    "BEAM_FRAME": {
+      "name": "BEAM_FRAME",
+      "color": 3,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 16
+    },
+    "ELCTRICAL": {
+      "name": "ELCTRICAL",
+      "color": 10,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 2
+    },
+    "CHAJJA": {
+      "name": "CHAJJA",
+      "color": 8,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 9
+    },
+    "WALLS_UPDATED": {
+      "name": "WALLS_UPDATED",
+      "color": 7,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 61
+    },
+    "TREES": {
+      "name": "TREES",
+      "color": 7,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 6
+    },
+    "HATCH_ARCHITECTURE": {
+      "name": "HATCH_ARCHITECTURE",
+      "color": 252,
+      "is_locked": false,
+      "is_off": false,
+      "is_frozen": false,
+      "entity_count": 10
+    }
+  },
+  "entities": {
+    "total_count": 844,
+    "by_type": {
+      "LWPOLYLINE": 114,
+      "HATCH": 12,
+      "LINE": 570,
+      "CIRCLE": 30,
+      "ARC": 78,
+      "MTEXT": 19,
+      "INSERT": 1,
+      "DIMENSION": 9,
+      "SPLINE": 8,
+      "LEADER": 1,
+      "IMAGE": 2
+    },
+    "by_layer_and_type": {
+      "DIM": {
+        "LWPOLYLINE": 36,
+        "LINE": 427,
+        "ARC": 59,
+        "DIMENSION": 9,
+        "CIRCLE": 6,
+        "SPLINE": 8,
+        "LEADER": 1,
+        "IMAGE": 2
+      },
+      "HATCH_ARCHITECTURE": {
+        "HATCH": 10
+      },
+      "WALLS_UPDATED": {
+        "LWPOLYLINE": 17,
+        "LINE": 44
+      },
+      "WALL": {
+        "LINE": 5,
+        "LWPOLYLINE": 22,
+        "ARC": 3,
+        "CIRCLE": 2,
+        "INSERT": 1
+      },
+      "ELE": {
+        "LINE": 8
+      },
+      "WIN_GL": {
+        "LINE": 3
+      },
+      "BEAM_FRAME": {
+        "HATCH": 2,
+        "LWPOLYLINE": 6,
+        "CIRCLE": 8
+      },
+      "0": {
+        "LWPOLYLINE": 7
+      },
+      "FUNIRUTURE": {
+        "ARC": 2
+      },
+      "FURINTURE": {
+        "LINE": 13,
+        "LWPOLYLINE": 17,
+        "ARC": 1
+      },
+      "BEAM": {
+        "LWPOLYLINE": 1
+      },
+      "ELEVA": {
+        "LWPOLYLINE": 3
+      },
+      "HATCH": {
+        "LINE": 55,
+        "CIRCLE": 14,
+        "ARC": 13,
+        "LWPOLYLINE": 3
+      },
+      "TAXT": {
+        "MTEXT": 13
+      },
+      "ELCTRICAL": {
+        "LWPOLYLINE": 2
+      },
+      "TREES": {
+        "LINE": 6
+      },
+      "BLDGTEXT": {
+        "MTEXT": 6
+      },
+      "CHAJJA": {
+        "LINE": 9
+      }
+    }
+  },
+  "z_coordinates": {
+    "has_non_zero_z": true,
+    "non_zero_z_entity_count": 1072,
+    "z_min": -89158.08366223545,
+    "z_max": 0.0051299721417308,
+    "z_distinct_values": 14
+  },
+  "blocks": {
+    "total_block_definitions": 38,
+    "user_block_count": 23,
+    "anonymous_block_count": 15,
+    "block_list": [
+      {
+        "name": "*MODEL_SPACE",
+        "is_anonymous": true,
+        "entity_count": 844,
+        "insert_count": 0
+      },
+      {
+        "name": "*PAPER_SPACE",
+        "is_anonymous": true,
+        "entity_count": 0,
+        "insert_count": 0
+      },
+      {
+        "name": "_DOT",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      },
+      {
+        "name": "_ARCHTICK",
+        "is_anonymous": false,
+        "entity_count": 1,
+        "insert_count": 0
+      },
+      {
+        "name": "ARCHTICK",
+        "is_anonymous": false,
+        "entity_count": 1,
+        "insert_count": 0
+      },
+      {
+        "name": "BASEPLAN$0$_NONE",
+        "is_anonymous": false,
+        "entity_count": 15,
+        "insert_count": 0
+      },
+      {
+        "name": "*D4",
+        "is_anonymous": true,
+        "entity_count": 10,
+        "insert_count": 0
+      },
+      {
+        "name": "*D5",
+        "is_anonymous": true,
+        "entity_count": 10,
+        "insert_count": 0
+      },
+      {
+        "name": "*D6",
+        "is_anonymous": true,
+        "entity_count": 9,
+        "insert_count": 0
+      },
+      {
+        "name": "*D7",
+        "is_anonymous": true,
+        "entity_count": 10,
+        "insert_count": 0
+      },
+      {
+        "name": "_DOTSMALL",
+        "is_anonymous": false,
+        "entity_count": 1,
+        "insert_count": 0
+      },
+      {
+        "name": "3RETERSFDDSF",
+        "is_anonymous": false,
+        "entity_count": 124,
+        "insert_count": 1
+      },
+      {
+        "name": "*D10",
+        "is_anonymous": true,
+        "entity_count": 8,
+        "insert_count": 0
+      },
+      {
+        "name": "*D11",
+        "is_anonymous": true,
+        "entity_count": 8,
+        "insert_count": 0
+      },
+      {
+        "name": "*D12",
+        "is_anonymous": true,
+        "entity_count": 8,
+        "insert_count": 0
+      },
+      {
+        "name": "*D13",
+        "is_anonymous": true,
+        "entity_count": 8,
+        "insert_count": 0
+      },
+      {
+        "name": "*D14",
+        "is_anonymous": true,
+        "entity_count": 8,
+        "insert_count": 0
+      },
+      {
+        "name": "*D15",
+        "is_anonymous": true,
+        "entity_count": 8,
+        "insert_count": 0
+      },
+      {
+        "name": "*D16",
+        "is_anonymous": true,
+        "entity_count": 8,
+        "insert_count": 0
+      },
+      {
+        "name": "*D17",
+        "is_anonymous": true,
+        "entity_count": 8,
+        "insert_count": 0
+      },
+      {
+        "name": "*D18",
+        "is_anonymous": true,
+        "entity_count": 8,
+        "insert_count": 0
+      },
+      {
+        "name": "_CLOSEDFILLED",
+        "is_anonymous": false,
+        "entity_count": 1,
+        "insert_count": 0
+      },
+      {
+        "name": "_NONE",
+        "is_anonymous": false,
+        "entity_count": 0,
+        "insert_count": 0
+      },
+      {
+        "name": "_OPEN30",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      },
+      {
+        "name": "_DOTBLANK",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      },
+      {
+        "name": "_OBLIQUE",
+        "is_anonymous": false,
+        "entity_count": 1,
+        "insert_count": 0
+      },
+      {
+        "name": "_BOXBLANK",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      },
+      {
+        "name": "_SMALL",
+        "is_anonymous": false,
+        "entity_count": 1,
+        "insert_count": 0
+      },
+      {
+        "name": "_CLOSEDBLANK",
+        "is_anonymous": false,
+        "entity_count": 1,
+        "insert_count": 0
+      },
+      {
+        "name": "_ORIGIN",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      },
+      {
+        "name": "_DATUMBLANK",
+        "is_anonymous": false,
+        "entity_count": 1,
+        "insert_count": 0
+      },
+      {
+        "name": "_OPEN90",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      },
+      {
+        "name": "_BOXFILLED",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      },
+      {
+        "name": "_ORIGIN2",
+        "is_anonymous": false,
+        "entity_count": 3,
+        "insert_count": 0
+      },
+      {
+        "name": "_CLOSED",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      },
+      {
+        "name": "_INTEGRAL",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      },
+      {
+        "name": "_DATUMFILLED",
+        "is_anonymous": false,
+        "entity_count": 1,
+        "insert_count": 0
+      },
+      {
+        "name": "_OPEN",
+        "is_anonymous": false,
+        "entity_count": 2,
+        "insert_count": 0
+      }
+    ]
+  },
+  "texts": {
+    "total_text_count": 19,
+    "all_texts": [
+      {
+        "type": "MTEXT",
+        "text": "hob",
+        "layer": "TAXT",
+        "position": [
+          122844.0163326905,
+          19458.71356366393,
+          0.0
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W3.90783; }fridge",
+        "layer": "TAXT",
+        "position": [
+          122850.7938172848,
+          19519.88827910327,
+          0.0
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W3.64593; }ENTRY",
+        "layer": "TAXT",
+        "position": [
+          122934.3543405888,
+          19271.05134447076,
+          0.0
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W1.80799; }{\\H1.66898x;1}{\\H1.00000x; BHK }",
+        "layer": "TAXT",
+        "position": [
+          122972.5740700661,
+          19554.17857161096,
+          -24460.03655417497
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FSwis721 Lt BT;\\W7.97377;    }{\\T1.20000;remark}",
+        "layer": "BLDGTEXT",
+        "position": [
+          122753.4072645455,
+          19205.52531070943,
+          -0.0069560051254791
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FSwis721 Lt BT;\\W9.15625;    }{\\T1.05000;revision}",
+        "layer": "BLDGTEXT",
+        "position": [
+          122752.529643718,
+          19179.68254604756,
+          -0.0069560051254791
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\T1.20000;checked by :  }",
+        "layer": "BLDGTEXT",
+        "position": [
+          122960.5990612884,
+          19179.63002556199,
+          -0.0005557762835722
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\fSwis721 Lt BT|b1|i0|c0|p34;\\T1.2;date : 20-12-2025}",
+        "layer": "BLDGTEXT",
+        "position": [
+          122968.0487049236,
+          19204.25897024601,
+          -0.0069560051254791
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FSwis721 Lt BT;\\W2.29970; }{\\T1.20000;drawn by: }",
+        "layer": "BLDGTEXT",
+        "position": [
+          122950.4191677307,
+          19191.63323027034,
+          -0.0005557762835722
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W3.43164; }M. Toi. \\P{\\FTrebuchet MS;\\W1.47926; }7'8\" x 4'0\"",
+        "layer": "TAXT",
+        "position": [
+          122712.6190718454,
+          19389.98359374323,
+          -29719.36103085236
+        ],
+        "parsed_arch_dims": [
+          92.0,
+          48.0
+        ],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W3.52688; }C. Toi. \\P{\\FTrebuchet MS;\\W1.47926; }4'0\" x 7'0\"",
+        "layer": "TAXT",
+        "position": [
+          122830.2283381941,
+          19352.59992313491,
+          0.0
+        ],
+        "parsed_arch_dims": [
+          48.0,
+          84.0
+        ],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "M. Bedroom \\P   9'3\" x 11'0\"",
+        "layer": "TAXT",
+        "position": [
+          122720.3503163262,
+          19560.29830908507,
+          -29719.36103085248
+        ],
+        "parsed_arch_dims": [
+          111.0,
+          132.0
+        ],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W2.62212; }wardrobe",
+        "layer": "TAXT",
+        "position": [
+          122694.624935558,
+          19409.01755467749,
+          -29719.36103085236
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W2.25051; }Liv./Din.\\P12'0\" x 14'6\"",
+        "layer": "TAXT",
+        "position": [
+          122927.1789570373,
+          19371.3526045999,
+          0.0
+        ],
+        "parsed_arch_dims": [
+          144.0,
+          174.0
+        ],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W3.26498; }Kitchen \\P{\\FTrebuchet MS;\\W1.00307; }7'10\" x 7'0\"",
+        "layer": "TAXT",
+        "position": [
+          122818.4670844792,
+          19490.97190885252,
+          0.0
+        ],
+        "parsed_arch_dims": [
+          94.0,
+          84.0
+        ],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W2.06004; } Balcony\\P      9'3\" x 3'3\"",
+        "layer": "TAXT",
+        "position": [
+          122921.1224747174,
+          19537.7239815193,
+          0.0
+        ],
+        "parsed_arch_dims": [
+          111.0,
+          39.0
+        ],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W2.13146; }LIV./DIN.",
+        "layer": "TAXT",
+        "position": [
+          122586.9897853882,
+          19228.82749473973,
+          0.0
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FTrebuchet MS;\\W0.90165; }M. BEDROOM",
+        "layer": "TAXT",
+        "position": [
+          122574.9638100595,
+          19381.64511755788,
+          0.0
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      },
+      {
+        "type": "MTEXT",
+        "text": "{\\FSwis721 Lt BT;\\W0.36750; }{\\T1.20000;PROPOSED  LAYOUT OF SHOW FLAT  FOR \"TODAY }{\\FSwis721 Lt BT;\\W8.37423;  }{\\T1.20000;GLOBAL\" }",
+        "layer": "BLDGTEXT",
+        "position": [
+          122538.4577610773,
+          19192.85861162829,
+          -0.0079885461082637
+        ],
+        "parsed_arch_dims": [],
+        "parsed_metric_dim": null
+      }
+    ]
+  },
+  "room_labels": [
+    {
+      "type": "MTEXT",
+      "text": "{\\FTrebuchet MS;\\W3.64593; }ENTRY",
+      "layer": "TAXT",
+      "position": [
+        122934.3543405888,
+        19271.05134447076,
+        0.0
+      ],
+      "parsed_arch_dims": [],
+      "parsed_metric_dim": null
+    },
+    {
+      "type": "MTEXT",
+      "text": "{\\FTrebuchet MS;\\W3.43164; }M. Toi. \\P{\\FTrebuchet MS;\\W1.47926; }7'8\" x 4'0\"",
+      "layer": "TAXT",
+      "position": [
+        122712.6190718454,
+        19389.98359374323,
+        -29719.36103085236
+      ],
+      "parsed_arch_dims": [
+        92.0,
+        48.0
+      ],
+      "parsed_metric_dim": null
+    },
+    {
+      "type": "MTEXT",
+      "text": "{\\FTrebuchet MS;\\W3.52688; }C. Toi. \\P{\\FTrebuchet MS;\\W1.47926; }4'0\" x 7'0\"",
+      "layer": "TAXT",
+      "position": [
+        122830.2283381941,
+        19352.59992313491,
+        0.0
+      ],
+      "parsed_arch_dims": [
+        48.0,
+        84.0
+      ],
+      "parsed_metric_dim": null
+    },
+    {
+      "type": "MTEXT",
+      "text": "M. Bedroom \\P   9'3\" x 11'0\"",
+      "layer": "TAXT",
+      "position": [
+        122720.3503163262,
+        19560.29830908507,
+        -29719.36103085248
+      ],
+      "parsed_arch_dims": [
+        111.0,
+        132.0
+      ],
+      "parsed_metric_dim": null
+    },
+    {
+      "type": "MTEXT",
+      "text": "{\\FTrebuchet MS;\\W2.25051; }Liv./Din.\\P12'0\" x 14'6\"",
+      "layer": "TAXT",
+      "position": [
+        122927.1789570373,
+        19371.3526045999,
+        0.0
+      ],
+      "parsed_arch_dims": [
+        144.0,
+        174.0
+      ],
+      "parsed_metric_dim": null
+    },
+    {
+      "type": "MTEXT",
+      "text": "{\\FTrebuchet MS;\\W3.26498; }Kitchen \\P{\\FTrebuchet MS;\\W1.00307; }7'10\" x 7'0\"",
+      "layer": "TAXT",
+      "position": [
+        122818.4670844792,
+        19490.97190885252,
+        0.0
+      ],
+      "parsed_arch_dims": [
+        94.0,
+        84.0
+      ],
+      "parsed_metric_dim": null
+    },
+    {
+      "type": "MTEXT",
+      "text": "{\\FTrebuchet MS;\\W2.06004; } Balcony\\P      9'3\" x 3'3\"",
+      "layer": "TAXT",
+      "position": [
+        122921.1224747174,
+        19537.7239815193,
+        0.0
+      ],
+      "parsed_arch_dims": [
+        111.0,
+        39.0
+      ],
+      "parsed_metric_dim": null
+    },
+    {
+      "type": "MTEXT",
+      "text": "{\\FTrebuchet MS;\\W2.13146; }LIV./DIN.",
+      "layer": "TAXT",
+      "position": [
+        122586.9897853882,
+        19228.82749473973,
+        0.0
+      ],
+      "parsed_arch_dims": [],
+      "parsed_metric_dim": null
+    },
+    {
+      "type": "MTEXT",
+      "text": "{\\FTrebuchet MS;\\W0.90165; }M. BEDROOM",
+      "layer": "TAXT",
+      "position": [
+        122574.9638100595,
+        19381.64511755788,
+        0.0
+      ],
+      "parsed_arch_dims": [],
+      "parsed_metric_dim": null
+    }
+  ],
+  "dimensions": {
+    "dimension_entity_count": 9,
+    "dimensions": [
+      {
+        "layer": "DIM",
+        "text_override": "",
+        "actual_measurement": null,
+        "dim_type": 0
+      },
+      {
+        "layer": "DIM",
+        "text_override": "",
+        "actual_measurement": null,
+        "dim_type": 0
+      },
+      {
+        "layer": "DIM",
+        "text_override": "",
+        "actual_measurement": null,
+        "dim_type": 0
+      },
+      {
+        "layer": "DIM",
+        "text_override": "",
+        "actual_measurement": null,
+        "dim_type": 0
+      },
+      {
+        "layer": "DIM",
+        "text_override": "",
+        "actual_measurement": null,
+        "dim_type": 0
+      },
+      {
+        "layer": "DIM",
+        "text_override": "",
+        "actual_measurement": null,
+        "dim_type": 128
+      },
+      {
+        "layer": "DIM",
+        "text_override": "",
+        "actual_measurement": null,
+        "dim_type": 0
+      },
+      {
+        "layer": "DIM",
+        "text_override": "",
+        "actual_measurement": null,
+        "dim_type": 0
+      },
+      {
+        "layer": "DIM",
+        "text_override": "",
+        "actual_measurement": null,
+        "dim_type": 0
+      }
+    ]
+  },
+  "geometry_statistics": {
+    "bounding_box": {
+      "min_x": 122537.149,
+      "max_x": 123099.259,
+      "min_y": 19170.007,
+      "max_y": 19567.612,
+      "width": 562.11,
+      "height": 397.604
+    },
+    "total_segment_count": 1077,
+    "line_length_stats": {
+      "min": 0.0,
+      "max": 562.11,
+      "mean": 15.582,
+      "median": 1.974
+    },
+    "wall_line_length_stats": {
+      "count": 170,
+      "min": 0.0,
+      "max": 562.11,
+      "mean": 23.162,
+      "median": 5.906
+    },
+    "candidate_wall_thicknesses": [
+      {
+        "offset_distance": 0.3,
+        "frequency": 20
+      },
+      {
+        "offset_distance": 1.0,
+        "frequency": 19
+      },
+      {
+        "offset_distance": 4.9,
+        "frequency": 18
+      },
+      {
+        "offset_distance": 17.7,
+        "frequency": 17
+      },
+      {
+        "offset_distance": 18.0,
+        "frequency": 16
+      },
+      {
+        "offset_distance": 12.8,
+        "frequency": 16
+      },
+      {
+        "offset_distance": 3.0,
+        "frequency": 14
+      },
+      {
+        "offset_distance": 0.5,
+        "frequency": 11
+      },
+      {
+        "offset_distance": 4.0,
+        "frequency": 10
+      },
+      {
+        "offset_distance": 5.9,
+        "frequency": 10
+      }
+    ],
+    "endpoint_gap_stats": {
+      "sample_gaps_count": 28990,
+      "min_gap": 0.01,
+      "max_gap": 99.981,
+      "median_gap": 14.931,
+      "percentile_10": 0.141
+    },
+    "duplicate_segment_count": 400
+  },
+  "scale_calibration": {
+    "scale_value_to_meters": 0.001,
+    "unit_name": "Millimeters",
+    "scale_source": "EXTENT_SPAN_AND_WALL_OFFSETS",
+    "scale_confidence": "HIGH",
+    "evidence": [
+      "Drawing extent span (562.1) and coordinates indicate MILLIMETERS."
+    ]
+  },
+  "layer_role_classification": {
+    "0": {
+      "assigned_role": "UNKNOWN",
+      "confidence": "MEDIUM",
+      "entity_count": 7
+    },
+    "WALL": {
+      "assigned_role": "WALL",
+      "confidence": "HIGH",
+      "entity_count": 33
+    },
+    "DEFPOINTS": {
+      "assigned_role": "UNKNOWN",
+      "confidence": "MEDIUM",
+      "entity_count": 0
+    },
+    "DIM": {
+      "assigned_role": "DIMENSION",
+      "confidence": "HIGH",
+      "entity_count": 548
+    },
+    "FURINTURE": {
+      "assigned_role": "FURNITURE",
+      "confidence": "HIGH",
+      "entity_count": 31
+    },
+    "BEAM": {
+      "assigned_role": "STRUCTURAL",
+      "confidence": "HIGH",
+      "entity_count": 1
+    },
+    "FUNIRUTURE": {
+      "assigned_role": "UNKNOWN",
+      "confidence": "MEDIUM",
+      "entity_count": 2
+    },
+    "ELEVA": {
+      "assigned_role": "ELECTRICAL / ANNOTATION",
+      "confidence": "MEDIUM",
+      "entity_count": 3
+    },
+    "TAXT": {
+      "assigned_role": "ROOM_LABEL / ANNOTATION",
+      "confidence": "HIGH",
+      "entity_count": 13
+    },
+    "BASEPLAN$0$WALL": {
+      "assigned_role": "WALL",
+      "confidence": "HIGH",
+      "entity_count": 0
+    },
+    "BASEPLAN$0$PARKING": {
+      "assigned_role": "UNKNOWN",
+      "confidence": "MEDIUM",
+      "entity_count": 0
+    },
+    "BASEPLAN$0$4": {
+      "assigned_role": "UNKNOWN",
+      "confidence": "MEDIUM",
+      "entity_count": 0
+    },
+    "HATCH": {
+      "assigned_role": "SURFACE_HATCH",
+      "confidence": "HIGH",
+      "entity_count": 85
+    },
+    "ELE": {
+      "assigned_role": "ELECTRICAL / ANNOTATION",
+      "confidence": "MEDIUM",
+      "entity_count": 8
+    },
+    "BLDGTEXT": {
+      "assigned_role": "ROOM_LABEL / ANNOTATION",
+      "confidence": "HIGH",
+      "entity_count": 6
+    },
+    "WIN_GL": {
+      "assigned_role": "WINDOW",
+      "confidence": "HIGH",
+      "entity_count": 3
+    },
+    "BEAM_FRAME": {
+      "assigned_role": "STRUCTURAL",
+      "confidence": "HIGH",
+      "entity_count": 16
+    },
+    "ELCTRICAL": {
+      "assigned_role": "ELECTRICAL / ANNOTATION",
+      "confidence": "MEDIUM",
+      "entity_count": 2
+    },
+    "CHAJJA": {
+      "assigned_role": "UNKNOWN",
+      "confidence": "MEDIUM",
+      "entity_count": 9
+    },
+    "WALLS_UPDATED": {
+      "assigned_role": "WALL",
+      "confidence": "HIGH",
+      "entity_count": 61
+    },
+    "TREES": {
+      "assigned_role": "UNKNOWN",
+      "confidence": "MEDIUM",
+      "entity_count": 6
+    },
+    "HATCH_ARCHITECTURE": {
+      "assigned_role": "SURFACE_HATCH",
+      "confidence": "HIGH",
+      "entity_count": 10
+    }
+  }
+}

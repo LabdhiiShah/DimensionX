@@ -1,0 +1,23 @@
+# Non-Layer Wall Promotion Configuration
+# Configurable thresholds and score weights for Layer 1 / Layer 2 audit promotion
+
+min_length_factor: 1.5
+parallel_angle_tol_deg: 5.0
+thickness_match_rel_tol: 0.35
+min_overlap_ratio: 0.10
+min_connectivity: 1
+min_promotion_score: 0.45
+
+# Part A Additions
+fragment_density_threshold: 0.50
+min_layer_confidence_for_role: 0.65
+structural_requires_geometry_agreement: true
+
+# Score Weights (Must sum to 1.0)
+length_weight: 0.30
+parallel_weight: 0.40
+connectivity_weight: 0.20
+layer_role_weight: 0.10
+
+# Audit Logging Limits
+max_skipped_log: 500
