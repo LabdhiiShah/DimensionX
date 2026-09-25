@@ -7,7 +7,7 @@
     {
       "category": "SEMANTICS",
       "code": "UNASSIGNED_ROOM_LABELS",
-      "message": "10 room polygons lack explicit DXF text callouts and were designated UNKNOWN_SPACE."
+      "message": "6 room polygons lack explicit DXF text callouts and were designated UNKNOWN_SPACE."
     }
   ]
 }

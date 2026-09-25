@@ -49,7 +49,12 @@ def run_pipeline(dxf_filepath, output_dir="output"):
     
     # Step 4: Aperture Detection & Hosting
     print("\n[Step 4/8] Running Aperture Engine (Doors & Windows)...")
-    aperture_engine = ApertureEngine(doc, unit_to_meters=audit_data["scale_calibration"]["scale_value_to_meters"])
+    layer_classifications = audit_data.get("layer_role_classification", {})
+    aperture_engine = ApertureEngine(
+        doc,
+        unit_to_meters=audit_data["scale_calibration"]["scale_value_to_meters"],
+        layer_classifications=layer_classifications
+    )
     doors, windows = aperture_engine.detect_and_host_apertures(geom_results["planar_edges"], room_polygons=annotated_rooms)
     
     # Re-build adjacency graph with hosted doors

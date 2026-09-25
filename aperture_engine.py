@@ -6,13 +6,41 @@ Hosts apertures parametrically onto nearest wall centerlines and determines conn
 """
 
 import math
+from collections import defaultdict
 from shapely.geometry import Point, LineString
 
 class ApertureEngine:
-    def __init__(self, dxf_doc, unit_to_meters=1.0):
+    def __init__(self, dxf_doc, unit_to_meters=1.0, layer_classifications=None):
         self.doc = dxf_doc
         self.msp = dxf_doc.modelspace()
         self.unit_to_meters = unit_to_meters if unit_to_meters > 0 else 1.0
+        self.layer_classifications = layer_classifications or {}
+        self._reject_reasons = {}   # layer_name -> reason string
+
+    def _reject_log(self, layer_name, reason):
+        self._reject_reasons[layer_name] = reason
+
+    def _calc_layer_fragment_ratio(self, layer_name):
+        min_len = min(0.5 / self.unit_to_meters, 0.5)
+        total_segs = 0
+        short_segs = 0
+        for e in self.msp:
+            if getattr(e.dxf, 'layer', '') == layer_name:
+                if e.dxftype() == 'LINE':
+                    p1 = (e.dxf.start[0], e.dxf.start[1])
+                    p2 = (e.dxf.end[0], e.dxf.end[1])
+                    length = math.hypot(p2[0] - p1[0], p2[1] - p1[1])
+                    total_segs += 1
+                    if length < min_len:
+                        short_segs += 1
+                elif e.dxftype() == 'LWPOLYLINE':
+                    pts = list(e.get_points('xy'))
+                    for i in range(len(pts) - 1):
+                        length = math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1])
+                        total_segs += 1
+                        if length < min_len:
+                            short_segs += 1
+        return (short_segs / float(total_segs)) if total_segs > 0 else 0.0
 
     def detect_and_host_apertures(self, wall_edges, room_polygons=None):
         """
@@ -20,6 +48,8 @@ class ApertureEngine:
         """
         doors = self._detect_doors()
         windows = self._detect_windows()
+        
+        print(f"[ApertureEngine] Detected {len(doors)} doors, {len(windows)} windows (pre-host).")
         
         hosted_doors = self._host_apertures_on_walls(doors, wall_edges, room_polygons=room_polygons, aperture_type="DOOR")
         hosted_windows = self._host_apertures_on_walls(windows, wall_edges, room_polygons=room_polygons, aperture_type="WINDOW")
@@ -76,26 +106,81 @@ class ApertureEngine:
 
         return doors
 
+    def _is_window_layer(self, layer_name):
+        c_info = self.layer_classifications.get(layer_name, {})
+        roles = c_info.get("candidate_roles", [])
+        top_role = roles[0]["role"] if roles else (c_info.get("top_role") or c_info.get("assigned_role"))
+        top_conf = roles[0]["confidence"] if roles else (1.0 if c_info.get("confidence") == "HIGH" else (0.5 if c_info.get("confidence") == "MEDIUM" else 0.0))
+
+        fragment_ratio = c_info.get("fragment_ratio")
+        if fragment_ratio is None:
+            fragment_ratio = self._calc_layer_fragment_ratio(layer_name)
+
+        conflict = c_info.get("conflict", False)
+
+        # Primary: use classifier role, but require confidence + sanity gates
+        if top_role == "WINDOW":
+            if top_conf < 0.5:
+                self._reject_log(layer_name, f"WINDOW role but confidence {top_conf:.2f} < 0.5")
+                return False
+            if fragment_ratio > 0.5:
+                self._reject_log(layer_name, f"WINDOW role but fragment_ratio {fragment_ratio:.3f} > 0.5")
+                return False
+            if conflict:
+                self._reject_log(layer_name, "WINDOW role but classifier reports conflict")
+                return False
+            return True
+
+        # Fallback: name-based
+        layer_u = layer_name.upper()
+        is_electrical = any(kw in layer_u for kw in
+            ['ELECTRICAL', 'WIRING', 'LIGHTING', 'POWER', 'ELE_', '_ELE', 'EL_', '_EL'])
+        if is_electrical:
+            self._reject_log(layer_name, "electrical layer keyword")
+            return False
+        if any(kw in layer_u for kw in ['WIN', 'GLAS', 'GLAZ']):
+            return True
+        self._reject_log(layer_name, "not window role / keyword")
+        return False
+
     def _detect_windows(self):
         windows = []
         win_id = 1
         
         win_lines = []
-        min_win_len = 0.2 / self.unit_to_meters
+        min_win_len = min(0.2 / self.unit_to_meters, 0.1)
         
-        for e in self.msp.query('LINE LWPOLYLINE'):
-            layer_u = e.dxf.layer.upper()
-            is_electrical = any(kw in layer_u for kw in ['EL', 'ELE', 'ELECTRICAL', 'WIRING', 'LOW'])
-            if not is_electrical and any(kw in layer_u for kw in ['WIN', 'GLAS', 'WIND']):
+        layer_counts = defaultdict(int)
+        layer_decisions = {}
+        
+        all_entities = list(self.msp.query('LINE LWPOLYLINE'))
+        print(f"[ApertureEngine] Scanning {len(all_entities)} LINE/LWPOLYLINE entities for window geometry...")
+        
+        for e in all_entities:
+            layer = e.dxf.layer
+            layer_counts[layer] += 1
+            if layer not in layer_decisions:
+                layer_decisions[layer] = self._is_window_layer(layer)
+                
+            if layer_decisions[layer]:
                 if e.dxftype() == 'LINE':
                     p1 = (e.dxf.start[0], e.dxf.start[1])
                     p2 = (e.dxf.end[0], e.dxf.end[1])
-                    win_lines.append((p1, p2, e.dxf.layer))
+                    win_lines.append((p1, p2, layer))
                 elif e.dxftype() == 'LWPOLYLINE':
                     pts = list(e.get_points('xy'))
                     for i in range(len(pts) - 1):
-                        win_lines.append(((pts[i][0], pts[i][1]), (pts[i+1][0], pts[i+1][1]), e.dxf.layer))
+                        win_lines.append(((pts[i][0], pts[i][1]), (pts[i+1][0], pts[i+1][1]), layer))
                         
+        print("[ApertureEngine] Layer Scanning Diagnostics:")
+        sorted_layers = sorted(layer_counts.items(), key=lambda x: x[1], reverse=True)
+        for layer, count in sorted_layers[:10]:
+            is_win = layer_decisions[layer]
+            status = "ACCEPTED" if is_win else "REJECTED"
+            reason = self._reject_reasons.get(layer, "")
+            reason_str = f" ({reason})" if reason else ""
+            print(f"  - Layer '{layer}': {count} entities -> {status}{reason_str}")
+            
         for p1, p2, layer in win_lines:
             mid_x = (p1[0] + p2[0]) / 2.0
             mid_y = (p1[1] + p2[1]) / 2.0
