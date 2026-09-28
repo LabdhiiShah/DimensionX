@@ -22,4 +22,6 @@ Thumbs.db
 
 # Local scratch/debug files
 # Uncomment if scratch should stay local:
-# scratch/
+# scratch/node_modules/
+dist/
+.env
