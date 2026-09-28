@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+  "description": "Configurable architectural DXF layer classification vocabulary mapping roles to token patterns.",
+  "roles": {
+    "WALL": {
+      "tokens": ["WALL", "WALLS", "MASONRY", "PARTITION", "PARAPET", "MAUER", "MUR", "PARED", "WAND", "BASEPLAN$0$WALL"],
+      "weight": 1.0
+    },
+    "WINDOW": {
+      "tokens": ["WIN", "WIND", "WINDOW", "WINDOWS", "GLAS", "GLASS", "GLAZING", "FENSTER", "FENETRE"],
+      "weight": 1.0
+    },
+    "DOOR": {
+      "tokens": ["DOOR", "DOORS", "DR", "TUER", "PORTE", "PUERTA", "ENTRANCE_DOOR"],
+      "weight": 1.0
+    },
+    "FURNITURE": {
+      "tokens": ["FUR", "FURN", "FURNITURE", "FURINTURE", "FUNIRUTURE", "MOEBEL", "EQUIPMENT", "FIXTURE", "SAN", "PLUMB"],
+      "weight": 1.0
+    },
+    "DIMENSION": {
+      "tokens": ["DIM", "DIMS", "DIMENSION", "DIMENSIONS", "MASS", "DEFPOINTS", "MEASURE", "COTATION"],
+      "weight": 1.0
+    },
+    "ANNOTATION": {
+      "tokens": ["TEXT", "TAXT", "BLDGTEXT", "ANNO", "ANNOTATION", "LABEL", "ROOM_NAME", "BESCHRIFTUNG", "TITLE", "STAMP", "NOTES"],
+      "weight": 1.0
+    },
+    "HATCH": {
+      "tokens": ["HATCH", "PAT", "PATTERN", "FILL", "SURFACE", "SHADE"],
+      "weight": 1.0
+    },
+    "STRUCTURAL": {
+      "tokens": ["BEAM", "COL", "COLUMN", "STRUCT", "STRUCTURE", "SLAB", "FOUNDATION", "STAIR", "TRUSS"],
+      "weight": 1.0
+    },
+    "ELECTRICAL": {
+      "tokens": ["ELE", "ELC", "ELEVA", "ELCTRICAL", "ELECTRICAL", "POWER", "LIGHT", "WIRING", "ELWIN", "SWITCH", "SOCKET"],
+      "weight": 1.0
+    },
+    "SITE": {
+      "tokens": ["SITE", "LAND", "TOPO", "CONTOUR", "GRID", "PROPERTY", "BOUNDARY", "TREES", "CHAJJA", "LANDSCAPE"],
+      "weight": 1.0
+    }
+  }
+}
