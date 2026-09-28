@@ -465,87 +465,42 @@ class DXFAuditor:
 
     def _calibrate_scale(self, header_info, dim_info, text_info, geom_stats):
         """
-        Determines units and scale dynamically based on evidence hierarchy:
-        1. Dimension callouts in TEXT/MTEXT matched against drawing extent scale
-        2. Extent scale priors (e.g. 10,000+ DXF units indicates mm, 10-100 indicates meters)
-        3. Wall thickness parallel offsets
-        4. $INSUNITS header variable
+        Determines units and scale using Layer 3 Scale Resolution (layer3_scale.py).
         """
-        evidence = []
-        scale_source = "UNRESOLVED"
-        scale_confidence = "LOW"
-        unit_name = "Millimeters"
-        to_meters_factor = 0.001
-
-        bbox = geom_stats.get("bounding_box", {})
-        width = bbox.get("width", 0)
-        height = bbox.get("height", 0)
-        max_span = max(width, height)
-        max_coord = max(abs(bbox.get("max_x", 0)), abs(bbox.get("max_y", 0)))
-
-        # Check Text measurement strings (e.g. 9'3" x 11'0" or 0.15)
-        texts = text_info.get("all_texts", [])
-        arch_dims_found = []
-        metric_dims_found = []
-        for t in texts:
-            if t["parsed_arch_dims"]:
-                arch_dims_found.extend(t["parsed_arch_dims"])
-            if t["parsed_metric_dim"] is not None:
-                metric_dims_found.append(t["parsed_metric_dim"])
-
         thicknesses = [o["offset_distance"] for o in geom_stats.get("candidate_wall_thicknesses", [])]
-
-        # 1. $INSUNITS header check if explicitly non-zero
-        insunits_code = header_info.get("INSUNITS_code", 0)
-        if insunits_code in (4, 5, 6, 1, 2):
-            if insunits_code == 4:
-                unit_name, to_meters_factor = "Millimeters", 0.001
-            elif insunits_code == 5:
-                unit_name, to_meters_factor = "Centimeters", 0.01
-            elif insunits_code == 6:
-                unit_name, to_meters_factor = "Meters", 1.0
-            elif insunits_code == 1:
-                unit_name, to_meters_factor = "Inches", 0.0254
-            elif insunits_code == 2:
-                unit_name, to_meters_factor = "Feet", 0.3048
-            scale_source = "$INSUNITS_HEADER"
-            scale_confidence = "HIGH"
-            evidence.append(f"Header $INSUNITS explicitly specifies {unit_name} (code {insunits_code}).")
-
-        # 2. Evidence from Text dimensions and Drawing Extents
-        elif arch_dims_found or max_span > 1000.0 or max_coord > 5000.0:
-            if any(100 <= t <= 350 for t in thicknesses) or max_span > 2000.0 or max_coord > 5000.0:
-                unit_name = "Millimeters"
-                to_meters_factor = 0.001
-                scale_source = "EXTENT_SPAN_AND_WALL_OFFSETS"
-                scale_confidence = "HIGH"
-                evidence.append(f"Drawing extent span ({max_span:.1f}) and coordinates indicate MILLIMETERS.")
-            elif any(10 <= t <= 35 for t in thicknesses) or (200.0 <= max_span <= 2000.0):
-                unit_name = "Centimeters"
-                to_meters_factor = 0.01
-                scale_source = "EXTENT_SPAN_AND_WALL_OFFSETS"
-                scale_confidence = "HIGH"
-                evidence.append(f"Drawing extent span ({max_span:.1f}) indicates CENTIMETERS.")
-            else:
-                unit_name = "Millimeters"
-                to_meters_factor = 0.001
-                scale_source = "EXTENT_SPAN_FALLBACK"
-                scale_confidence = "MEDIUM"
-                evidence.append("High coordinate values indicate MILLIMETERS.")
-
-        elif metric_dims_found or max_span < 200.0:
-            unit_name = "Meters"
-            to_meters_factor = 1.0
-            scale_source = "METRIC_EXTENT_SPAN"
-            scale_confidence = "HIGH"
-            evidence.append(f"Drawing extent span ({max_span:.1f}) indicates METERS.")
+        med_thick = float(np.median(thicknesses)) if thicknesses else 0.0
+        
+        bbox = geom_stats.get("bounding_box", {})
+        width = float(bbox.get("width", 0))
+        height = float(bbox.get("height", 0))
+        diag = float(math.hypot(width, height))
+        
+        tb = {
+            "wall_thickness_stats": {"median": {"value": med_thick}},
+            "drawing_extent": {"diagonal": {"value": diag}}
+        }
+        
+        try:
+            from layer3_scale import resolve_scale
+            doc_obj = getattr(self, "doc", None)
+            sb = resolve_scale(doc=doc_obj, tolerance_bundle=tb)
+            if sb.confidence != "UNSPECIFIED":
+                return {
+                    "scale_value_to_meters": sb.scale_to_meters,
+                    "unit_name": sb.unit_name,
+                    "scale_source": sb.source,
+                    "scale_confidence": sb.confidence,
+                    "evidence": sb.notes
+                }
+        except Exception as e:
+            pass
 
         return {
-            "scale_value_to_meters": to_meters_factor,
-            "unit_name": unit_name,
-            "scale_source": scale_source,
-            "scale_confidence": scale_confidence,
-            "evidence": evidence
+            "scale_value_to_meters": 0.001,
+            "unit_name": "Millimeters",
+            "scale_source": "UNRESOLVED",
+            "scale_confidence": "LOW",
+            "evidence": ["Fallback default"]
         }
 
     def _classify_layers(self, layers_info, entity_info):

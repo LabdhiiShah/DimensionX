@@ -23,3 +23,15 @@ Thumbs.db
 # Local scratch/debug files
 # Uncomment if scratch should stay local:
 # scratch/
+
+# Generated outputs
+output/
+
+# Scratch / experiments
+scratch/
+
+# Temporary test models
+test.glb
+test1.glb
+test2.glb
+test3.glb

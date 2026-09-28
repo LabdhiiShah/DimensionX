@@ -4,12 +4,10 @@
 Reads 2D floor plan JSON (output/house2d.json) and builds a proper 3D house model:
 - Solid 3D walls with real thickness, cut for doors and windows
 - Lintel wall boxes over door/window gaps
-- Rotated 3D door slabs and glass window panes
 - Extruded floor slab and flat roof / ceiling
 - Centroid floating room labels
-- Best-effort visual furniture anchors (beds, kitchen counters, sofas, toilets)
 - Matplotlib 3D preview renders (top-down bird's-eye and interior walkthrough)
-- Unity-ready Y-up 3D model exports (GLB and OBJ)
+- Unity-ready Y-up 3D model exports (GLB and OBJ) with named node hierarchy
 """
 
 import os
@@ -18,6 +16,7 @@ import argparse
 import math
 import json
 import re
+from datetime import datetime, timezone
 from collections import defaultdict
 from typing import List, Dict, Tuple, Any, Optional
 
@@ -34,11 +33,7 @@ COLOR_WALL = [0.85, 0.85, 0.85, 1.0]        # #d9d9d9 Light Grey
 COLOR_FLOOR = [0.941, 0.922, 0.882, 1.0]    # #f0ebe1 Off-White/Sand
 COLOR_ROOF = [0.910, 0.878, 0.816, 1.0]     # #e8e0d0 Light Beige
 COLOR_DOOR = [0.545, 0.353, 0.169, 1.0]     # #8b5a2b Wood Brown
-COLOR_GLASS = [0.659, 0.847, 0.918, 0.4]    # #a8d8ea Light Blue Transparent
-COLOR_BED = [0.290, 0.420, 0.510, 1.0]      # #4a6b82 Slate Blue
-COLOR_SOFA = [0.478, 0.322, 0.188, 1.0]     # #7a5230 Leather Brown
-COLOR_COUNTER = [0.659, 0.553, 0.404, 1.0]  # #a88d67 Warm Wood
-COLOR_TOILET = [0.816, 0.902, 0.941, 1.0]   # #d0e6f0 Light Cyan
+COLOR_GLASS = [0.659, 0.847, 0.918, 0.6]    # #a8d8ea Light Blue Transparent (alpha 0.6)
 
 HEX_WALL = '#d9d9d9'
 HEX_FLOOR = '#f0ebe1'
@@ -141,6 +136,7 @@ def create_box_mesh(
     rot = trimesh.transformations.rotation_matrix(math.radians(yaw_deg), [0, 0, 1])
     rot[:3, 3] = center
     box.apply_transform(rot)
+    box.fix_normals()
     box.visual.face_colors = (np.array(color) * 255).astype(np.uint8)
     return box
 
@@ -192,7 +188,6 @@ class House3DBuilder:
         self.raw_doors = bc.get("doors", [])
         self.raw_windows = bc.get("windows", [])
         self.raw_rooms = bc.get("rooms", [])
-        self.raw_footprint = bc.get("building_footprint", {})
 
         # Extract vertical parameters
         levels = house2d_data.get("levels", [{}])
@@ -200,8 +195,15 @@ class House3DBuilder:
         self.wall_height = vert.get("wall_height", {}).get("value", WALL_HEIGHT_DEFAULT)
         self.slab_thickness = vert.get("slab_thickness", {}).get("value", SLAB_THICKNESS_DEFAULT)
 
-        # Output Mesh Storage
+        # Output Mesh Storage & Mesh Groups
         self.meshes: List[trimesh.Trimesh] = []
+        self.mesh_groups: Dict[str, List[trimesh.Trimesh]] = {
+            "floor": [],
+            "ceiling": [],
+            "walls": [],
+            "doors": [],
+            "windows": []
+        }
         self.mpl_polys: List[Tuple[List[np.ndarray], str, float]] = [] # (faces, color_hex, alpha)
 
         # Counters for Summary Report
@@ -211,11 +213,7 @@ class House3DBuilder:
             "door_slabs": 0,
             "window_openings_cut": 0,
             "glass_panes": 0,
-            "rooms_labeled": 0,
-            "furniture_beds": 0,
-            "furniture_counters": 0,
-            "furniture_sofas": 0,
-            "furniture_toilets": 0
+            "rooms_labeled": 0
         }
 
         self.room_labels: List[Tuple[float, float, str]] = [] # (x, y, text)
@@ -229,32 +227,68 @@ class House3DBuilder:
         print("[Engine] Processing Walls, Openings & Lintel Geometry...")
         self._build_walls_and_openings()
 
-        print("[Engine] Generating Room Labels & Visual Furniture Anchors...")
+        print("[Engine] Generating Room Labels...")
         self._build_rooms_and_furniture()
+
+        # Deterministic origin normalization pass
+        valid_meshes = [m for m in self.meshes if isinstance(m, trimesh.Trimesh)]
+        if valid_meshes:
+            combined = trimesh.util.concatenate(valid_meshes)
+            min_x, min_y, min_z = combined.bounds[0]
+
+            shift = [-min_x, -min_y, -min_z]
+            for m in self.meshes:
+                if isinstance(m, trimesh.Trimesh):
+                    m.apply_translation(shift)
+
+            self.center_x -= min_x
+            self.center_y -= min_y
+
+            self.room_labels = [(cx - min_x, cy - min_y, text) for (cx, cy, text) in self.room_labels]
+
+            shift_arr = np.array([min_x, min_y, min_z])
+            new_mpl = []
+            for faces, col, alpha in self.mpl_polys:
+                new_faces = [[v - shift_arr for v in face] for face in faces]
+                new_mpl.append((new_faces, col, alpha))
+            self.mpl_polys = new_mpl
 
     def _build_footprint_and_slabs(self) -> None:
         """Extrudes floor slab and optional ceiling/roof slab."""
         pts_m = []
-        if isinstance(self.raw_footprint, dict) and "coordinates" in self.raw_footprint:
-            raw_pts = self.raw_footprint["coordinates"]
-            pts_m = [self.scaler.to_m(p) for p in raw_pts]
-        elif self.raw_rooms:
-            # Fallback: Union of all room polygons
-            room_polys = []
-            for r in self.raw_rooms:
-                r_pts = [self.scaler.to_m(p) for p in r.get("polygon_vertices", [])]
-                if len(r_pts) >= 3:
-                    room_polys.append(sg.Polygon(r_pts))
-            if room_polys:
-                union_poly = so.unary_union(room_polys)
-                if isinstance(union_poly, sg.Polygon):
-                    pts_m = list(union_poly.exterior.coords)
-                elif hasattr(union_poly, "geoms"):
-                    pts_m = list(union_poly.geoms[0].exterior.coords)
+        # PRIMARY: Union of all room polygons
+        room_polys = []
+        for r in self.raw_rooms:
+            r_pts = [self.scaler.to_m(p) for p in r.get("polygon_vertices", [])]
+            if len(r_pts) >= 3:
+                p_poly = sg.Polygon(r_pts)
+                if not p_poly.is_valid:
+                    p_poly = p_poly.buffer(0)
+                if p_poly.is_valid and p_poly.area > 0.01:
+                    room_polys.append(p_poly)
 
+        if room_polys:
+            union_poly = so.unary_union(room_polys)
+            if isinstance(union_poly, sg.Polygon):
+                pts_m = list(union_poly.exterior.coords)
+            elif hasattr(union_poly, "geoms"):
+                pts_m = list(union_poly.convex_hull.exterior.coords)
+
+        # FALLBACK: Bounding box of all wall centerlines with 0.15 m padding
         if not pts_m or len(pts_m) < 3:
-            # Synthetic default rectangle fallback
-            pts_m = [(0.0, 0.0), (14.0, 0.0), (14.0, 12.0), (0.0, 12.0)]
+            wall_pts = []
+            for w in self.raw_walls:
+                for pt in w.get("centerline", []):
+                    wall_pts.append(self.scaler.to_m(pt))
+            if wall_pts:
+                xs = [p[0] for p in wall_pts]
+                ys = [p[1] for p in wall_pts]
+                pad = 0.15
+                min_x, max_x = min(xs) - pad, max(xs) + pad
+                min_y, max_y = min(ys) - pad, max(ys) + pad
+                pts_m = [(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)]
+            else:
+                pts_m = [(0.0, 0.0), (14.0, 0.0), (14.0, 12.0), (0.0, 12.0)]
 
         poly = sg.Polygon(pts_m)
         if not poly.is_valid:
@@ -265,14 +299,15 @@ class House3DBuilder:
         self.center_x = (min_x + max_x) / 2.0
         self.center_y = (min_y + max_y) / 2.0
 
-        # 1. Floor Slab (extrude downward from z=0 to z=-0.2)
+        # 1. Floor Slab (extrude downward from z=0 to z=-slab_thickness)
         try:
             floor_mesh = trimesh.creation.extrude_polygon(poly, height=self.slab_thickness)
             floor_mesh.apply_translation([0, 0, -self.slab_thickness])
+            floor_mesh.fix_normals()
             floor_mesh.visual.face_colors = (np.array(COLOR_FLOOR) * 255).astype(np.uint8)
             self.meshes.append(floor_mesh)
+            self.mesh_groups["floor"].append(floor_mesh)
 
-            # Matplotlib box representation for preview renders
             f_box_faces = get_box_faces_matplotlib(
                 max_x - min_x, max_y - min_y, self.slab_thickness,
                 (self.center_x, self.center_y, -self.slab_thickness / 2.0)
@@ -286,8 +321,10 @@ class House3DBuilder:
             try:
                 roof_mesh = trimesh.creation.extrude_polygon(poly, height=ROOF_THICKNESS_DEFAULT)
                 roof_mesh.apply_translation([0, 0, self.wall_height])
+                roof_mesh.fix_normals()
                 roof_mesh.visual.face_colors = (np.array(COLOR_ROOF) * 255).astype(np.uint8)
                 self.meshes.append(roof_mesh)
+                self.mesh_groups["ceiling"].append(roof_mesh)
 
                 r_box_faces = get_box_faces_matplotlib(
                     max_x - min_x, max_y - min_y, ROOF_THICKNESS_DEFAULT,
@@ -298,7 +335,7 @@ class House3DBuilder:
                 print(f"[Warning] Failed to extrude roof slab: {e}")
 
     def _build_walls_and_openings(self) -> None:
-        """Processes 2D wall centerlines, cuts door/window gaps, creates lintels, door slabs, & glass panes."""
+        """Processes 2D wall centerlines, cuts door/window gaps, & creates wall/lintel/sill boxes."""
         walls_by_id = {w.get("wall_id"): w for w in self.raw_walls if w.get("wall_id")}
 
         # Group openings by host_wall_id
@@ -361,6 +398,7 @@ class House3DBuilder:
 
                 if t_end > t_start:
                     h_height = door.get("head_height", {}).get("value", 2.1) if isinstance(door.get("head_height"), dict) else 2.1
+                    hinge_pt = (p1_m[0] + t_start * u_vec[0], p1_m[1] + t_start * u_vec[1])
                     openings.append({
                         "type": "DOOR",
                         "t_start": t_start,
@@ -368,7 +406,7 @@ class House3DBuilder:
                         "width": t_end - t_start,
                         "head_height": h_height,
                         "sill_height": 0.0,
-                        "hinge_pt": (p1_m[0] + t_start * u_vec[0], p1_m[1] + t_start * u_vec[1])
+                        "hinge_pt": hinge_pt
                     })
                     self.counts["door_openings_cut"] += 1
 
@@ -400,6 +438,10 @@ class House3DBuilder:
             # Sort openings along segment
             openings.sort(key=lambda op: op["t_start"])
 
+            wall_id = wall.get("wall_id", "")
+            layer_name = wall.get("provenance", {}).get("source_layer", "?") if isinstance(wall.get("provenance"), dict) else "?"
+            print(f"[3D-Wall] id={wall_id}, layer={layer_name}, len={seg_len:.2f}m, thick={thick_m:.3f}m, openings={len(openings)}")
+
             # Split wall into solid sub-segments and lintel/sill boxes
             curr_t = 0.0
 
@@ -425,7 +467,7 @@ class House3DBuilder:
                         c_pt = (op_mid_xy[0], op_mid_xy[1], op["head_height"] + lintel_h / 2.0)
                         self._add_wall_box(op_width, thick_m, lintel_h, c_pt, yaw_deg)
 
-                    # Add Door Slab (rotated 35 degrees open)
+                    # Door slab, rotated 35 degrees open
                     door_thick = 0.04
                     swing_yaw = yaw_deg + 35.0
                     hinge = op["hinge_pt"]
@@ -436,8 +478,9 @@ class House3DBuilder:
                         op["head_height"] / 2.0
                     )
                     door_box = create_box_mesh(op_width, door_thick, op["head_height"], slab_center, swing_yaw, COLOR_DOOR)
+                    door_box.fix_normals()
                     self.meshes.append(door_box)
-
+                    self.mesh_groups["doors"].append(door_box)
                     d_faces = get_box_faces_matplotlib(op_width, door_thick, op["head_height"], slab_center, swing_yaw)
                     self.mpl_polys.append((d_faces, HEX_DOOR, 1.0))
                     self.counts["door_slabs"] += 1
@@ -454,15 +497,16 @@ class House3DBuilder:
                         c_pt = (op_mid_xy[0], op_mid_xy[1], op["head_height"] + lintel_h / 2.0)
                         self._add_wall_box(op_width, thick_m, lintel_h, c_pt, yaw_deg)
 
-                    # Glass Pane (light blue, alpha 0.4)
+                    # Glass pane
                     win_h = op["head_height"] - op["sill_height"]
                     glass_thick = 0.02
                     pane_center = (op_mid_xy[0], op_mid_xy[1], op["sill_height"] + win_h / 2.0)
                     glass_mesh = create_box_mesh(op_width, glass_thick, win_h, pane_center, yaw_deg, COLOR_GLASS)
+                    glass_mesh.fix_normals()
                     self.meshes.append(glass_mesh)
-
+                    self.mesh_groups["windows"].append(glass_mesh)
                     g_faces = get_box_faces_matplotlib(op_width, glass_thick, win_h, pane_center, yaw_deg)
-                    self.mpl_polys.append((g_faces, HEX_GLASS, 0.4))
+                    self.mpl_polys.append((g_faces, HEX_GLASS, 0.6))
                     self.counts["glass_panes"] += 1
 
                 curr_t = t_end
@@ -477,14 +521,15 @@ class House3DBuilder:
     def _add_wall_box(self, length: float, width: float, height: float, center: Tuple[float, float, float], yaw_deg: float) -> None:
         """Helper to create and store wall box mesh & matplotlib faces."""
         w_mesh = create_box_mesh(length, width, height, center, yaw_deg, COLOR_WALL)
+        w_mesh.fix_normals()
         self.meshes.append(w_mesh)
+        self.mesh_groups["walls"].append(w_mesh)
         w_faces = get_box_faces_matplotlib(length, width, height, center, yaw_deg)
         self.mpl_polys.append((w_faces, HEX_WALL, 1.0))
         self.counts["wall_boxes"] += 1
 
     def _build_rooms_and_furniture(self) -> None:
-        """Processes room labels and adds visual furniture anchors (best-effort)."""
-        # Sort rooms by polygon area descending for ranked semantic inference
+        """Processes room labels."""
         sorted_rooms = sorted(
             self.raw_rooms,
             key=lambda r: sg.Polygon([self.scaler.to_m(p) for p in r.get("polygon_vertices", [])]).area if len(r.get("polygon_vertices", [])) >= 3 else 0.0,
@@ -507,39 +552,6 @@ class House3DBuilder:
 
             self.room_labels.append((cx, cy, clean_name))
             self.counts["rooms_labeled"] += 1
-
-            # Best-effort visual furniture placement inside room centroid
-            lname = clean_name.lower()
-            try:
-                if "bed" in lname:
-                    # Bed box: 1.5m x 2.0m x 0.5m
-                    b_mesh = create_box_mesh(1.5, 2.0, 0.5, (cx, cy, 0.25), 0.0, COLOR_BED)
-                    self.meshes.append(b_mesh)
-                    self.mpl_polys.append((get_box_faces_matplotlib(1.5, 2.0, 0.5, (cx, cy, 0.25)), '#4a6b82', 1.0))
-                    self.counts["furniture_beds"] += 1
-
-                elif "kit" in lname:
-                    # Counter box: 0.6m x 2.0m x 0.9m
-                    c_mesh = create_box_mesh(0.6, 2.0, 0.9, (cx, cy, 0.45), 0.0, COLOR_COUNTER)
-                    self.meshes.append(c_mesh)
-                    self.mpl_polys.append((get_box_faces_matplotlib(0.6, 2.0, 0.9, (cx, cy, 0.45)), '#a88d67', 1.0))
-                    self.counts["furniture_counters"] += 1
-
-                elif "liv" in lname or "din" in lname or "hall" in lname:
-                    # Sofa box: 0.9m x 2.1m x 0.8m
-                    s_mesh = create_box_mesh(0.9, 2.1, 0.8, (cx, cy, 0.40), 0.0, COLOR_SOFA)
-                    self.meshes.append(s_mesh)
-                    self.mpl_polys.append((get_box_faces_matplotlib(0.9, 2.1, 0.8, (cx, cy, 0.40)), '#7a5230', 1.0))
-                    self.counts["furniture_sofas"] += 1
-
-                elif "bath" in lname or "toi" in lname:
-                    # Toilet/vanity box: 0.6m x 0.6m x 0.4m
-                    t_mesh = create_box_mesh(0.6, 0.6, 0.4, (cx, cy, 0.20), 0.0, COLOR_TOILET)
-                    self.meshes.append(t_mesh)
-                    self.mpl_polys.append((get_box_faces_matplotlib(0.6, 0.6, 0.4, (cx, cy, 0.20)), '#d0e6f0', 1.0))
-                    self.counts["furniture_toilets"] += 1
-            except Exception as e:
-                print(f"[Warning] Best-effort furniture placement skipped for '{clean_name}': {e}")
 
     def _clean_room_label(self, raw_name: str, sem_type: str, area_sqm: float, room_idx: int) -> str:
         """Cleans formatting tags and produces human-readable room title."""
@@ -659,18 +671,24 @@ def render_previews(builder: House3DBuilder, output_dir: str = "output") -> None
 # 5. UNITY / VR EXPORTER (GLB & OBJ)
 # ==============================================================================
 
-def export_unity_models(builder: House3DBuilder, output_dir: str = "output") -> Tuple[str, str, float]:
+def export_unity_models(builder: House3DBuilder, output_dir: str = "output") -> Tuple[str, str, float, Dict[str, Any]]:
     """Combines meshes into Unity Y-up orientation scene and exports GLB and OBJ."""
     os.makedirs(output_dir, exist_ok=True)
 
     if not builder.meshes:
         print("[Warning] No 3D meshes created to export.")
-        return "", "", 0.0
+        return "", "", 0.0, {}
 
-    # Combine all individual 3D meshes into a single scene
     combined_scene = trimesh.Scene()
-    for idx, mesh in enumerate(builder.meshes):
-        combined_scene.add_geometry(mesh, node_name=f"part_{idx}")
+    for group_name, mesh_list in builder.mesh_groups.items():
+        if not mesh_list:
+            continue
+        if len(mesh_list) == 1:
+            g_mesh = mesh_list[0].copy()
+        else:
+            g_mesh = trimesh.util.concatenate(mesh_list)
+        g_mesh.fix_normals()
+        combined_scene.add_geometry(g_mesh, node_name=f"House_{group_name.capitalize()}")
 
     # Unity Standard Y-up Rotation Matrix (Rotate -90 degrees around X axis)
     y_up_transform = trimesh.transformations.rotation_matrix(-math.pi / 2.0, [1, 0, 0])
@@ -703,7 +721,12 @@ def export_unity_models(builder: House3DBuilder, output_dir: str = "output") -> 
     except Exception as e:
         print(f"[Warning] GLB verification load failed: {e}")
 
-    return glb_path, obj_path, glb_size_mb
+    bounds_dict = {
+        "min": [round(float(x), 4) for x in combined_scene.bounds[0]],
+        "max": [round(float(x), 4) for x in combined_scene.bounds[1]]
+    }
+
+    return glb_path, obj_path, glb_size_mb, bounds_dict
 
 # ==============================================================================
 # 6. MASTER EXECUTION & SUMMARY REPORT
@@ -736,21 +759,47 @@ def main():
     render_previews(builder, output_dir=args.output_dir)
 
     # 5. Export Unity Models (GLB & OBJ)
-    glb_path, obj_path, glb_size_mb = export_unity_models(builder, output_dir=args.output_dir)
+    glb_path, obj_path, glb_size_mb, bounds_dict = export_unity_models(builder, output_dir=args.output_dir)
 
-    # 6. Print Summary Report
+    # 6. Emit house_meta.json
+    meta_path = os.path.join(args.output_dir, "house_meta.json")
+    source_dxf = house2d_data.get("metadata", {}).get("source_dxf", os.path.basename(args.input))
+
+    meta_data = {
+        "schema_version": "1.0.0",
+        "source_dxf": source_dxf,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "origin": [0.0, 0.0, 0.0],
+        "origin_description": "Min-X, min-Y corner of floor slab. Floor top surface at y=0. Y-up, right-handed (Unity converts to left-handed on import).",
+        "units": "meters",
+        "up_axis": "Y",
+        "bounds": bounds_dict,
+        "wall_height": builder.wall_height,
+        "slab_thickness": builder.slab_thickness,
+        "counts": {
+            "walls": builder.counts["wall_boxes"],
+            "doors": builder.counts["door_openings_cut"],
+            "door_slabs": builder.counts["door_slabs"],
+            "windows": builder.counts["window_openings_cut"],
+            "glass_panes": builder.counts["glass_panes"],
+            "rooms": builder.counts["rooms_labeled"]
+        }
+    }
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta_data, f, indent=2)
+    print(f"[Meta] Saved House Metadata: {meta_path}")
+
+    # 7. Print Summary Report
     c = builder.counts
-    total_furniture_count = c['furniture_beds'] + c['furniture_counters'] + c['furniture_sofas'] + c['furniture_toilets']
 
     print("\n======================================================================")
     print("3D RECONSTRUCTION SUMMARY")
     print("======================================================================")
     print(f"Walls:     {c['wall_boxes']} boxes")
-    print(f"Doors:     {c['door_openings_cut']} openings cut, {c['door_slabs']} door slabs added")
-    print(f"Windows:   {c['window_openings_cut']} openings cut, {c['glass_panes']} glass panes added")
+    print(f"Doors:     {c['door_openings_cut']} openings cut, {c['door_slabs']} door slabs")
+    print(f"Windows:   {c['window_openings_cut']} openings cut, {c['glass_panes']} glass panes")
     print(f"Rooms:     {c['rooms_labeled']} labeled")
-    print(f"Furniture: {c['furniture_beds']} beds, {c['furniture_counters']} kitchen counter, {c['furniture_sofas']} sofas, {c['furniture_toilets']} toilets")
-    print(f"Exported:  house_model.glb ({glb_size_mb:.2f} MB), house_model.obj")
+    print(f"Exported:  house_model.glb ({glb_size_mb:.2f} MB), house_model.obj, house_meta.json")
     print(f"Renders:   house_preview_3d_top.png, house_preview_3d_walkthrough.png")
     print("======================================================================\n")
 

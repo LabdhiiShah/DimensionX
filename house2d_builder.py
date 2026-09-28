@@ -66,7 +66,8 @@ class House2DBuilder:
                 "confidence": "HIGH",
                 "provenance": {
                     "source_file": self.audit_data["file_info"]["filename"],
-                    "layer": "PRIMARY_WALL",
+                    "layer": e.get("layer", "PRIMARY_WALL"),
+                    "source_layer": e.get("source_layer", e.get("layer", "WALL")),
                     "derivation": "Planar topology edge extraction"
                 }
             })
@@ -97,6 +98,27 @@ class House2DBuilder:
             "area": round(footprint_poly.area, 2) if footprint_poly else 0.0,
             "derivation_source": "RECONSTRUCTED_ROOM_AND_WALL_UNION"
         }
+
+        connected_pairs = []
+        for door in hosted_doors:
+            connects = door.get("connects", [])
+            if len(connects) >= 2:
+                for i in range(len(connects)):
+                    for j in range(i + 1, len(connects)):
+                        a, b = connects[i], connects[j]
+                        if a == "EXTERIOR" or b == "EXTERIOR":
+                            continue
+                        connected_pairs.append({
+                            "room_a": a,
+                            "room_b": b,
+                            "relationship": "connected",
+                            "via_aperture": door.get("opening_id", "")
+                        })
+        print(f"[House2DBuilder] Door connections: {len(connected_pairs)}")
+
+        if adjacency_graph is None:
+            adjacency_graph = {}
+        adjacency_graph["connected_pairs"] = connected_pairs
 
         # Assembly
         house2d = {
