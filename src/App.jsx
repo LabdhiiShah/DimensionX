@@ -2,23 +2,54 @@ import React, { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 
-// Landing / Login Page Component
+// Point this at wherever the auth server (server/index.js) is actually running.
+const API_BASE = 'http://localhost:4000/api/auth';
+
+// Landing / Login / Signup Page Component
 function LandingPage() {
   const [showLogin, setShowLogin] = useState(false);
+  const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLoginSubmit = (e) => {
+  const handleAuthSubmit = async (e) => {
     e.preventDefault();
-// Extract username prefix before '@' (e.g., 'admin' from 'admin@dimensions')
-    const username = employeeId.includes('@') ? employeeId.split('@')[0] : employeeId;
+    setError('');
+    setLoading(true);
 
-    // Check if the user is an admin (e.g., employeeId includes 'admin')
-    const isAdmin = employeeId.toLowerCase().includes('admin');
+    try {
+      const endpoint = mode === 'signup' ? 'signup' : 'login';
+      const response = await fetch(`${API_BASE}/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId, password }),
+      });
 
-    // Redirect to dashboard with state
-    navigate('/dashboard', { state: { username, isAdmin } });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Something went wrong. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Keep the token around for any future authenticated requests.
+      localStorage.setItem('dimensionsx_token', data.token);
+
+      navigate('/dashboard', { state: { username: data.username, isAdmin: data.isAdmin } });
+    } catch (err) {
+      console.error('Auth request failed:', err);
+      setError('Could not reach the server. Is it running?');
+      setLoading(false);
+    }
+  };
+
+  const switchMode = () => {
+    setMode((m) => (m === 'login' ? 'signup' : 'login'));
+    setError('');
   };
 
   return (
@@ -64,9 +95,9 @@ function LandingPage() {
             </button>
           </div>
         ) : (
-          /* LOGIN VIEW */
+          /* LOGIN / SIGNUP VIEW */
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            
+
             <div className="flex flex-col justify-center text-center md:text-left pr-0 md:pr-6 space-y-4">
               <h1 className="text-[#800a1d] font-cinzel font-bold text-3xl sm:text-4xl lg:text-5xl tracking-wider">
                 WELCOME USER
@@ -78,10 +109,10 @@ function LandingPage() {
 
             <div className="bg-[#800a1d] text-white rounded-3xl p-8 sm:p-10 shadow-lg flex flex-col justify-center">
               <h2 className="text-center font-cinzel font-bold text-2xl sm:text-3xl tracking-widest mb-8">
-                LOGIN
+                {mode === 'signup' ? 'SIGN UP' : 'LOGIN'}
               </h2>
 
-              <form onSubmit={handleLoginSubmit} className="space-y-6">
+              <form onSubmit={handleAuthSubmit} className="space-y-6">
                 <div>
                   <label className="block font-sans text-xs sm:text-sm tracking-wider mb-2 font-semibold uppercase">
                     EMPLOYEE/ADMIN ID
@@ -106,22 +137,37 @@ function LandingPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    minLength={mode === 'signup' ? 6 : undefined}
                     className="w-full bg-[#cdeef2] text-[#800a1d] placeholder-[#800a1d]/60 font-sans px-6 py-3.5 rounded-full text-sm font-medium focus:outline-none"
                   />
                 </div>
 
+                {error && (
+                  <p className="text-center font-sans text-xs sm:text-sm text-[#ffd9d9] tracking-wide">
+                    {error}
+                  </p>
+                )}
+
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full bg-[#cdeef2] text-[#800a1d] font-cinzel font-bold tracking-widest py-3 rounded-full hover:bg-white transition-colors cursor-pointer"
+                    disabled={loading}
+                    className="w-full bg-[#cdeef2] text-[#800a1d] font-cinzel font-bold tracking-widest py-3 rounded-full hover:bg-white transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    SUBMIT
+                    {loading ? 'PLEASE WAIT…' : mode === 'signup' ? 'CREATE ACCOUNT' : 'SUBMIT'}
                   </button>
                 </div>
               </form>
 
               <button
-                onClick={() => setShowLogin(false)}
+                onClick={switchMode}
+                className="mt-4 text-center font-cinzel text-xs text-white/80 hover:text-white underline tracking-widest cursor-pointer"
+              >
+                {mode === 'signup' ? 'ALREADY HAVE AN ACCOUNT? LOG IN' : 'NEW HERE? SIGN UP'}
+              </button>
+
+              <button
+                onClick={() => { setShowLogin(false); setMode('login'); setError(''); }}
                 className="mt-4 text-center font-cinzel text-xs text-white/80 hover:text-white underline tracking-widest cursor-pointer"
               >
                 ← BACK
