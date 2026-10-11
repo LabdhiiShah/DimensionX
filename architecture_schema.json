@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DimensionX architecture.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "plan_id",
+    "bhk",
+    "units",
+    "footprint",
+    "walls",
+    "doors",
+    "windows",
+    "rooms"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "bhk": {
+      "type": "integer",
+      "enum": [
+        1,
+        2,
+        3
+      ]
+    },
+    "units": {
+      "const": "feet"
+    },
+    "wall_height": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "wall_thickness": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "footprint": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "$ref": "#/$defs/point"
+      }
+    },
+    "walls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "start",
+          "end",
+          "thickness",
+          "height"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "start": {
+            "$ref": "#/$defs/point"
+          },
+          "end": {
+            "$ref": "#/$defs/point"
+          },
+          "thickness": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "height": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "exterior": {
+            "type": "boolean"
+          },
+          "room_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "doors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/opening"
+      }
+    },
+    "windows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/opening"
+      }
+    },
+    "rooms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role",
+          "polygon"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "polygon": {
+            "type": "array",
+            "minItems": 3,
+            "items": {
+              "$ref": "#/$defs/point"
+            }
+          },
+          "area_sqft": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "balconies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role",
+          "polygon"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "polygon": {
+            "type": "array",
+            "minItems": 3,
+            "items": {
+              "$ref": "#/$defs/point"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "opening": {
+      "type": "object",
+      "required": [
+        "id",
+        "wall_id",
+        "center",
+        "width",
+        "height",
+        "sill_height",
+        "role",
+        "orientation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "wall_id": {
+          "type": "string"
+        },
+        "center": {
+          "$ref": "#/$defs/point"
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "sill_height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "role": {
+          "type": "string"
+        },
+        "orientation": {
+          "enum": [
+            "HORIZONTAL",
+            "VERTICAL"
+          ]
+        }
+      }
+    }
+  }
+}
