@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NodeJS 24.x'
+         nodejs 'Nodejs 24'
     }
 
     environment {
