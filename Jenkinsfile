@@ -61,6 +61,13 @@ pipeline {
                 }
             }
         }
+        stage('Website Status') {
+           steps {
+              echo 'Frontend build completed successfully.'
+              echo 'Website development URL: http://localhost:5173'
+              echo 'Note: This URL works only when the Vite development server is running.'
+    }
+}
 
         stage('Check Backend') {
             steps {
