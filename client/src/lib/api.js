@@ -7,9 +7,23 @@ export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const getUser = () => {
   try { return JSON.parse(localStorage.getItem(USER_KEY)) || null; } catch { return null; }
 };
-export function saveSession({ token, username, isAdmin }) {
+export function saveSession({
+  token,
+  username,
+  fullName,
+  email,
+  isAdmin,
+}) {
   localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(USER_KEY, JSON.stringify({ username, isAdmin }));
+  localStorage.setItem(
+    USER_KEY,
+    JSON.stringify({
+      username,
+      fullName: fullName || '',
+      email: email || '',
+      isAdmin,
+    })
+  );
 }
 export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
@@ -39,11 +53,23 @@ async function request(path, { method = 'GET', body } = {}) {
 }
 
 export const authApi = {
-  login: (employeeId, password) => request('/auth/login', { method: 'POST', body: { employeeId, password } }),
-  signup: (employeeId, password) => request('/auth/signup', { method: 'POST', body: { employeeId, password } }),
-};
+  login: (employeeId, password) =>
+    request('/auth/login', {
+      method: 'POST',
+      body: { employeeId, password },
+    }),
 
+  signup: (fullName, email, employeeId, password) =>
+    request('/auth/signup', {
+      method: 'POST',
+      body: { fullName, email, employeeId, password },
+    }),
+};
 export const projectsApi = {
   list: () => request('/projects'),
   create: (project) => request('/projects', { method: 'POST', body: project }),
 };
+export const employeesApi = {
+  list: () => request('/projects/employees'),
+};
+

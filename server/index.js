@@ -1,28 +1,44 @@
-// DimensionX API server (auth + projects). CommonJS only - do NOT mix import/require.
-require('dotenv').config();           // must be first so process.env is filled before anything else loads
+
+require('dotenv').config();
+
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const projectsRouter = require('./projects.cjs');
 
 const app = express();
 
-// Allow the Vite dev server (5173 by default, 5174 if 5173 is busy) plus anything in CLIENT_ORIGIN.
-const origins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  ...(process.env.CLIENT_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean),
-];
-app.use(cors({ origin: origins }));
+app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectsRouter);
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true });
+});
+
+// Serve the built React frontend
+const frontendPath = path.join(__dirname, '..', 'client', 'dist');
+app.use(express.static(frontendPath));
+
+// Keep unknown API requests from returning index.html
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'API endpoint not found.' });
+});
+
+// Support React Router page refreshes
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
 
 if (!process.env.JWT_SECRET) {
-  console.warn('WARNING: JWT_SECRET is not set. Login may still work if routes/auth.js has its own fallback, but /api/projects will reject every request.');
+  console.warn('WARNING: JWT_SECRET is not set.');
 }
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`DimensionX API listening on http://localhost:${PORT}`));
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`DimensionX server listening on port ${PORT}`);
+});
