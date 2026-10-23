@@ -24,3 +24,20 @@ public class FurnitureLayoutSnapshot
     public FurnitureLayoutEntry[] items;
     public string saved_at;
 }
+
+// --- NEW: Used to parse the layout coming from the database via Node.js ---
+[Serializable]
+public class SavedFurnitureItem
+{
+    public string instance_id;
+    public int type_id;
+    public int style_id;
+    public string style_name;
+    public string prefab_path;
+    public float world_x;
+    public float world_y;
+    public float world_z;
+    public float rotation_y_deg;
+    public float scale;
+    public float scale_multiplier;
+}

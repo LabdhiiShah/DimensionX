@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
-using GLTFast; // package: com.unity.cloud.gltfast (Window > Package Manager > + > Add package by name)
+using GLTFast;
 
 /// <summary>
 /// Turns the GLB produced by the website's DXF pipeline into the live house, and then sets
@@ -51,6 +51,7 @@ public class FloorplanLoader : MonoBehaviour
         public string glb_url;
         public string project_id;
         public PlanInfo plan = new PlanInfo();
+        public SavedFurnitureItem[] saved_furniture; // <--- NEW: Furniture layout from database
     }
 
     [Serializable]
@@ -199,6 +200,12 @@ public class FloorplanLoader : MonoBehaviour
         {
             sync.floorLayerMask = 1 << floorLayer;
             sync.ResetForNewPlan(plan != null && !string.IsNullOrEmpty(plan.key) ? plan.key : msg.glb_url);
+
+            // --- NEW: Spawn the saved furniture from the database ---
+            if (msg.saved_furniture != null && msg.saved_furniture.Length > 0)
+            {
+                sync.SpawnSavedFurniture(msg.saved_furniture);
+            }
         }
         else Debug.LogWarning("[FloorplanLoader] No FurnitureSyncManager in the scene - cameras are framed but nothing will be streamed.");
 
@@ -236,17 +243,12 @@ public class FloorplanLoader : MonoBehaviour
             }
             if (roof)
             {
-                // Keep the roof visible from inside in VR, but don't let it shade the whole interior.
                 var mr = go.GetComponent<MeshRenderer>();
                 if (mr != null) mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
         }
     }
 
-    // glTF is right-handed and Unity left-handed; importers resolve that by mirroring one axis,
-    // so the house can come out rotated 180 degrees relative to the DXF. Instead of relying on
-    // which convention the importer uses, compare where the floor actually landed with where the
-    // DXF says it should be, and spin it if needed. Result: Unity X/Z == DXF x/y (metres).
     private void AlignToPlanAxes(GameObject root, PlanInfo plan)
     {
         if (plan == null) return;
@@ -259,7 +261,7 @@ public class FloorplanLoader : MonoBehaviour
         float dot = c.x * plan.footprint_center_m.x + c.z * plan.footprint_center_m.y;
         if (dot < -0.01f)
         {
-            root.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // root sits at world origin
+            root.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
             Debug.Log($"[FloorplanLoader] Floor landed at {c}, DXF says ({plan.footprint_center_m.x:0.00}, {plan.footprint_center_m.y:0.00}) - rotated the house 180 degrees to match.");
         }
         else
@@ -274,14 +276,12 @@ public class FloorplanLoader : MonoBehaviour
         var b = new Bounds(root.transform.position, Vector3.zero);
         foreach (var r in root.GetComponentsInChildren<Renderer>())
         {
-            if (r.gameObject.layer == roofLayer) continue; // the roof isn't part of the "design" volume
+            if (r.gameObject.layer == roofLayer) continue;
             if (!has) { b = r.bounds; has = true; }
             else b.Encapsulate(r.bounds);
         }
         return b;
     }
-
-    // ---------------- Cameras ----------------
 
     private void SetUpWebsiteCameras(Bounds b)
     {
@@ -298,12 +298,11 @@ public class FloorplanLoader : MonoBehaviour
             return;
         }
 
-        // Dollhouse view that fits the whole house volume (a bounding sphere always fits, at any pitch).
         cam.orthographic = false;
         cam.fieldOfView = interiorFov;
         float radius = b.extents.magnitude * fitMargin;
         float dist = radius / Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
-        Quaternion rot = Quaternion.Euler(interiorPitch, 0f, 0f); // yaw 0: screen-up == +Z == the DXF's +y, so the plan reads like the drawing
+        Quaternion rot = Quaternion.Euler(interiorPitch, 0f, 0f);
         cam.transform.SetPositionAndRotation(b.center - rot * Vector3.forward * dist, rot);
         cam.farClipPlane = Mathf.Max(cam.farClipPlane, dist + radius * 2f);
     }
@@ -311,13 +310,8 @@ public class FloorplanLoader : MonoBehaviour
     private void PrepareWebsiteCamera(Camera cam)
     {
         if (cam == null) return;
-        cam.cullingMask &= ~(1 << roofLayer);                // never look at (or raycast through) the roof
-        //cam.stereoTargetEye = StereoTargetEyeMask.None;       // plain mono camera, never drawn into the headset
-        // Leave cam.enabled alone: these cameras are rendered by hand with Camera.Render(),
-        // which works while the component is disabled - and keeps them from fighting the XR camera.
+        cam.cullingMask &= ~(1 << roofLayer);
     }
-
-    // ---------------- VR spawn ----------------
 
     private void ComputeSpawn(PlanInfo plan, Bounds b)
     {
@@ -327,10 +321,9 @@ public class FloorplanLoader : MonoBehaviour
         SpawnPosition = FindFloorPointNear(want);
 
         Vector2 f = plan != null ? new Vector2(plan.facing.x, plan.facing.y) : Vector2.up;
-        SpawnYaw = Mathf.Atan2(f.x, f.y) * Mathf.Rad2Deg; // Unity yaw 0 faces +Z; DXF y == Unity z
+        SpawnYaw = Mathf.Atan2(f.x, f.y) * Mathf.Rad2Deg;
     }
 
-    // Nearest spot to 'want' that has floor under it and isn't hugging a wall.
     private Vector3 FindFloorPointNear(Vector3 want)
     {
         int floorMask = 1 << floorLayer;
@@ -344,15 +337,13 @@ public class FloorplanLoader : MonoBehaviour
                 float a = i * (Mathf.PI * 2f / steps);
                 Vector3 p = want + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radius;
                 if (!Physics.Raycast(p + Vector3.up * 50f, Vector3.down, out RaycastHit hit, 100f, floorMask)) continue;
-                if (Physics.CheckSphere(hit.point + Vector3.up * 1f, 0.35f, wallMask)) continue; // too close to a wall
+                if (Physics.CheckSphere(hit.point + Vector3.up * 1f, 0.35f, wallMask)) continue;
                 return hit.point;
             }
         }
         Debug.LogWarning("[FloorplanLoader] Couldn't find clear floor near the spawn point; using it as-is.");
         return want;
     }
-
-    // ---------------- Helpers ----------------
 
     private static bool Is(string a, string b, string name) => a == name || b == name;
 

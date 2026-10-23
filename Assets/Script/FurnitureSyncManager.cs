@@ -11,29 +11,6 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-/// <summary>
-/// Connects to the Node.js bridge server as a WebSocket client. Handles:
-///
-///   1. "swap_furniture"  — swap the prefab in a tagged slot (catalog demo).
-///   2. "place_furniture" — drag-and-drop a NEW piece from the website's
-///      live view. Multiple instances of the same type_id are supported.
-///   3. "move_furniture"  — reposition an EXISTING placed piece (by its
-///      instance_id) by dragging its marker to a new spot on the live view.
-///   4. "camera_pan" / "camera_zoom" — move the stream camera around, sent
-///      from D-pad/zoom controls on the website.
-///   5. "launch_vr"       — saves the full room layout and hands off to the
-///      bridge server, which launches your native VR build.
-///
-/// It streams a low-res JPEG of streamCamera's view to the website a few
-/// times a second, plus a list of where each placed instance currently
-/// projects onto that view (so the website can show draggable markers).
-///
-/// Persistence: every placement/move auto-saves the current set of
-/// drag-placed instances to disk, and reloads them on the next Start() —
-/// so a Play-mode session's edits survive stopping and restarting Play.
-/// This is separate from anything you placed via the Placement Tool while
-/// NOT in Play mode, which is already part of the saved Scene as normal.
-/// </summary>
 public class FurnitureSyncManager : MonoBehaviour
 {
     public static FurnitureSyncManager Instance { get; private set; }
@@ -44,18 +21,17 @@ public class FurnitureSyncManager : MonoBehaviour
     public float reconnectDelaySeconds = 3f;
 
     [Header("Live view streaming")]
-    [Tooltip("The LIVE camera used for the Design Room: drag-and-drop placement raycasts from this camera, and the website's arrow/zoom/rotate controls move THIS camera. Give it its own plain GameObject with nothing else on it (no XR/simulator scripts) — an in-room, roughly eye-level or elevated interior view works well for placing furniture precisely.")]
+    [Tooltip("The LIVE camera used for the Design Room.")]
     public Camera streamCamera;
-    [Tooltip("Optional — a SEPARATE, dedicated top-down camera used only when \"Save Design\" is pressed, to capture the whole room from directly above for the PDF. It is never shown live and is safe to leave with its Camera component permanently unchecked/disabled — capture still works, since it's rendered on demand via code. If left empty, streamCamera is temporarily borrowed and restored instead (works, but briefly repositions your live view while capturing).")]
+    [Tooltip("Optional — a SEPARATE, dedicated top-down camera used only when \"Save Design\" is pressed.")]
     public Camera floorPlanCamera;
     public int streamWidth = 640;
     public int streamHeight = 360;
-    [Tooltip("Frames per second sent to the website. Keep this low (3-8) — it's a design preview, not gameplay video.")]
+    [Tooltip("Frames per second sent to the website.")]
     public float streamFps = 5f;
     [Range(1, 100)] public int streamJpegQuality = 70;
 
     [Header("Drag-and-drop placement")]
-    [Tooltip("Only colliders on this layer are considered a valid drop surface.")]
     public LayerMask floorLayerMask = ~0;
     public float raycastMaxDistance = 100f;
 
@@ -122,9 +98,9 @@ public class FurnitureSyncManager : MonoBehaviour
         public int style_id;
         public string style_name;
         public string prefab_path;
-        public float viewport_x; // image-space, 0..1, origin top-left
+        public float viewport_x;
         public float viewport_y;
-        public string instance_id; // optional — server generates one if blank
+        public string instance_id;
     }
 
     [Serializable]
@@ -180,7 +156,7 @@ public class FurnitureSyncManager : MonoBehaviour
     private class RotateInstanceMessage { public string type; public string instance_id; public float degrees; }
 
     [Serializable]
-    private class ScaleInstanceMessage { public string type; public string instance_id; public float delta; } // e.g. +0.1 = grow 10%, -0.1 = shrink 10%
+    private class ScaleInstanceMessage { public string type; public string instance_id; public float delta; }
 
     [Serializable]
     private class InstanceTransformResultMessage { public string type = "instance_transform_result"; public bool success; public string instance_id; public string message; }
@@ -190,18 +166,17 @@ public class FurnitureSyncManager : MonoBehaviour
     {
         public string instance_id;
         public int type_id;
+        public int style_id;        // <--- NEW
         public string style_name;
+        public string prefab_path;  // <--- NEW
         public float viewport_x;
         public float viewport_y;
-        // World-space details, added so the website's "Save Design" PDF
-        // export can list real placement/orientation/size instead of just
-        // the on-screen marker position.
         public float world_x;
         public float world_y;
         public float world_z;
-        public float rotation_y_deg; // yaw only — matches ApplyRotateInstance, which only rotates around world-up
-        public float scale;          // absolute local scale x — exact number, useful for rebuilding
-        public float scale_multiplier; // size relative to this piece's own base/authored scale — 1 = original size, human-readable
+        public float rotation_y_deg;
+        public float scale;
+        public float scale_multiplier;
     }
 
     [Serializable]
@@ -222,14 +197,6 @@ public class FurnitureSyncManager : MonoBehaviour
     [Serializable]
     private class FloorPlanSnapshotMessage { public string type = "floorplan_snapshot"; public string image; public int width; public int height; public InstanceInfo[] items; }
 
-    // Full-room snapshot, written when you click "View in VR" (everything,
-    // including catalog-swap slots — the VR build wants the whole room).
-    // LayoutEntry/LayoutSnapshot are now shared with the VR build — see
-    // FurnitureLayoutModels.cs (FurnitureLayoutEntry / FurnitureLayoutSnapshot).
-
-    // Lightweight snapshot of just the drag-placed instances, auto-saved
-    // after every placement/move so a Play session's edits survive a
-    // Stop + Play cycle.
     [Serializable]
     private class PlacedInstanceEntry
     {
@@ -253,8 +220,6 @@ public class FurnitureSyncManager : MonoBehaviour
         _frameTexture = new Texture2D(streamWidth, streamHeight, TextureFormat.RGB24, false);
         _frameRenderTexture = new RenderTexture(streamWidth, streamHeight, 24);
 
-        // With a FloorplanLoader in the scene, furniture belongs to a specific generated house, so it is
-        // restored per plan from ResetForNewPlan() instead of blindly at startup.
         if (autoLoadPlacedInstancesOnStart && FindObjectOfType<FloorplanLoader>() == null) LoadPlacedInstancesIfPresent();
 
         if (streamCamera != null)
@@ -267,14 +232,6 @@ public class FurnitureSyncManager : MonoBehaviour
         await ConnectLoop(_cts.Token);
     }
 
-    // The single most common setup bug: the design camera should be a
-    // plain, dedicated Camera that ONLY this script moves (via camera_pan
-    // / camera_zoom / camera_rotate). If it's the same camera your XR
-    // Device Simulator (or a real headset) drives, the two will fight —
-    // the website nudges it one way, the simulator's input yanks it back.
-    // This can't know about XR packages specifically without depending on
-    // them, but it CAN tell you, generically, if anything else is on this
-    // GameObject that might be moving it.
     private void WarnIfStreamCameraLooksShared()
     {
         var others = streamCamera.GetComponents<MonoBehaviour>();
@@ -317,15 +274,8 @@ public class FurnitureSyncManager : MonoBehaviour
 
     private void RunOnMainThread(Action action) { lock (_queueLock) { _mainThreadQueue.Enqueue(action); } }
 
-    /// <summary>Lets other scripts in the scene (FloorplanLoader) send a message to the website.</summary>
     public void SendToBridge(object message) { _ = SendJson(message); }
 
-    /// <summary>
-    /// Called by FloorplanLoader when a new house replaces the old one. Clears everything placed in the
-    /// previous house, forgets the old test room's catalog-swap slots, and switches the persistence file to
-    /// one named after this plan - so re-opening the same project brings its furniture back, while a freshly
-    /// uploaded plan starts empty.
-    /// </summary>
     public void ResetForNewPlan(string planKey)
     {
         foreach (var kvp in _placedInstances) if (kvp.Value != null) Destroy(kvp.Value);
@@ -342,6 +292,49 @@ public class FurnitureSyncManager : MonoBehaviour
         Debug.Log($"[FurnitureSync] New plan session '{suffix}' ({_placedInstances.Count} piece(s) restored).");
     }
 
+    // --- NEW: Spawn saved furniture from the database ---
+    public void SpawnSavedFurniture(SavedFurnitureItem[] items)
+    {
+        if (items == null || items.Length == 0) return;
+
+        int spawnCount = 0;
+        foreach (var entry in items)
+        {
+            if (string.IsNullOrEmpty(entry.prefab_path)) continue;
+
+            var prefab = LoadPrefab(entry.prefab_path);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[FurnitureSync] Couldn't reload saved prefab: {entry.prefab_path}");
+                continue;
+            }
+
+            var pos = new Vector3(entry.world_x, entry.world_y, entry.world_z);
+            var rot = prefab.transform.rotation * Quaternion.Euler(0, entry.rotation_y_deg, 0);
+
+            var instance = Instantiate(prefab, pos, rot);
+
+            var slot = instance.GetComponent<FurnitureSlot>();
+            if (slot == null) slot = instance.AddComponent<FurnitureSlot>();
+
+            slot.baseScale = prefab.transform.localScale;
+            slot.scaleMultiplier = entry.scale_multiplier > 0f ? entry.scale_multiplier : 1f;
+            instance.transform.localScale = slot.baseScale * slot.scaleMultiplier;
+
+            instance.name = $"{entry.style_name} [{entry.instance_id.Substring(0, Math.Min(6, entry.instance_id.Length))}]";
+            slot.typeId = entry.type_id;
+            slot.styleId = entry.style_id;
+            slot.label = entry.style_name;
+            slot.instanceId = entry.instance_id;
+            slot.prefabPath = entry.prefab_path;
+
+            _placedInstances[entry.instance_id] = instance;
+            spawnCount++;
+        }
+
+        Debug.Log($"[FurnitureSync] Restored {spawnCount} furniture pieces from the database.");
+    }
+
     public void RegisterSlot(int typeId, GameObject go)
     {
         _slots[typeId] = go;
@@ -352,8 +345,6 @@ public class FurnitureSyncManager : MonoBehaviour
     {
         if (_slots.TryGetValue(typeId, out var current) && current == go) _slots.Remove(typeId);
     }
-
-    // ---------------- WebSocket connection ----------------
 
     private async Task ConnectLoop(CancellationToken token)
     {
@@ -476,8 +467,6 @@ public class FurnitureSyncManager : MonoBehaviour
         await _socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
     }
 
-    // ---------------- Prefab loading ----------------
-
     private GameObject LoadPrefab(string prefabPath)
     {
 #if UNITY_EDITOR
@@ -497,8 +486,6 @@ public class FurnitureSyncManager : MonoBehaviour
         return relative;
     }
 #endif
-
-    // ---------------- Swapping an existing slot (catalog demo) ----------------
 
     private void ApplySwap(SwapFurnitureMessage msg)
     {
@@ -521,7 +508,7 @@ public class FurnitureSyncManager : MonoBehaviour
 
         var t = currentObject.transform;
         Vector3 position = t.position;
-        Quaternion rotation = t.rotation; // preserve whatever rotation was already set for this slot
+        Quaternion rotation = t.rotation;
         Vector3 localScale = t.localScale;
         Transform parent = t.parent;
         int siblingIndex = t.GetSiblingIndex();
@@ -547,8 +534,6 @@ public class FurnitureSyncManager : MonoBehaviour
         _ = SendJson(new SwapResultMessage { type_id = msg.type_id, success = true, message = $"Applied {msg.style_name}" });
     }
 
-    // ---------------- Drag-and-drop placement (new instances) ----------------
-
     private void ApplyPlacement(PlaceFurnitureMessage msg)
     {
         if (msg == null) return;
@@ -567,7 +552,7 @@ public class FurnitureSyncManager : MonoBehaviour
             return;
         }
 
-        Vector3 viewportPoint = new Vector3(msg.viewport_x, 1f - msg.viewport_y, 0f); // image-space -> viewport-space
+        Vector3 viewportPoint = new Vector3(msg.viewport_x, 1f - msg.viewport_y, 0f);
         Ray ray = streamCamera.ViewportPointToRay(viewportPoint);
 
         if (!Physics.Raycast(ray, out RaycastHit hit, raycastMaxDistance, floorLayerMask))
@@ -578,10 +563,6 @@ public class FurnitureSyncManager : MonoBehaviour
 
         string instanceId = string.IsNullOrEmpty(msg.instance_id) ? Guid.NewGuid().ToString("N") : msg.instance_id;
 
-        // Use the PREFAB's own default rotation, not world-identity — a
-        // prefab's resting orientation is whatever the artist modeled it
-        // at, and forcing identity here is what caused pieces to look
-        // tilted for prefabs that weren't authored perfectly upright.
         GameObject instance = Instantiate(prefab, hit.point, prefab.transform.rotation);
         instance.name = $"{msg.type_name} ({msg.style_name}) [{instanceId.Substring(0, 6)}]";
 
@@ -592,7 +573,7 @@ public class FurnitureSyncManager : MonoBehaviour
         slot.label = msg.style_name;
         slot.instanceId = instanceId;
         slot.prefabPath = msg.prefab_path;
-        slot.baseScale = instance.transform.localScale; // whatever the prefab's own authored scale is
+        slot.baseScale = instance.transform.localScale;
         slot.scaleMultiplier = 1f;
 
         _placedInstances[instanceId] = instance;
@@ -602,8 +583,6 @@ public class FurnitureSyncManager : MonoBehaviour
 
         if (autoSavePlacedInstances) SavePlacedInstances();
     }
-
-    // ---------------- Repositioning an existing instance ----------------
 
     private void ApplyMove(MoveFurnitureMessage msg)
     {
@@ -628,14 +607,12 @@ public class FurnitureSyncManager : MonoBehaviour
             return;
         }
 
-        go.transform.position = hit.point; // rotation/scale untouched — just relocating
+        go.transform.position = hit.point;
         Debug.Log($"[FurnitureSync] Moved instance {msg.instance_id} to {hit.point}");
         _ = SendJson(new MoveResultMessage { success = true, instance_id = msg.instance_id, message = "Moved" });
 
         if (autoSavePlacedInstances) SavePlacedInstances();
     }
-
-    // ---------------- Rotating/scaling a specific placed instance ----------------
 
     private void ApplyRotateInstance(RotateInstanceMessage msg)
     {
@@ -665,18 +642,9 @@ public class FurnitureSyncManager : MonoBehaviour
         var slot = go.GetComponent<FurnitureSlot>();
         if (slot == null) slot = go.AddComponent<FurnitureSlot>();
 
-        // Safety net for instances that existed before baseScale was tracked
-        // (e.g. reloaded from an older save file): treat the CURRENT scale
-        // as the base, so resizing starts behaving correctly from here on.
         if (slot.baseScale == Vector3.zero) slot.baseScale = go.transform.localScale;
         if (slot.scaleMultiplier <= 0f) slot.scaleMultiplier = 1f;
 
-        // Resize relative to this instance's OWN base scale, not an
-        // absolute number — different prefabs are very often authored at
-        // wildly different native scales, so clamping an absolute value
-        // either jumped huge amounts or got permanently stuck at the clamp
-        // on the very first click. A multiplier of the piece's own base
-        // scale behaves sensibly no matter what that base scale is.
         float newMultiplier = Mathf.Clamp(slot.scaleMultiplier * (1f + msg.delta), minInstanceScale, maxInstanceScale);
         slot.scaleMultiplier = newMultiplier;
         go.transform.localScale = slot.baseScale * newMultiplier;
@@ -686,15 +654,13 @@ public class FurnitureSyncManager : MonoBehaviour
         if (autoSavePlacedInstances) SavePlacedInstances();
     }
 
-    // ---------------- Camera pan/zoom ----------------
-
     private void ApplyCameraPan(CameraPanMessage msg)
     {
         if (streamCamera == null) { Debug.LogWarning("[FurnitureSync] camera_pan received but no Stream Camera assigned."); return; }
         if (msg == null) return;
         Vector3 right = streamCamera.transform.right;
         Vector3 forwardFlat = Vector3.ProjectOnPlane(streamCamera.transform.forward, Vector3.up);
-        if (forwardFlat.sqrMagnitude < 0.0001f) forwardFlat = Vector3.forward; // camera looking straight down
+        if (forwardFlat.sqrMagnitude < 0.0001f) forwardFlat = Vector3.forward;
         forwardFlat.Normalize();
         Vector3 before = streamCamera.transform.position;
         streamCamera.transform.position += (right * msg.dx + forwardFlat * msg.dz) * cameraPanSpeed;
@@ -722,13 +688,9 @@ public class FurnitureSyncManager : MonoBehaviour
     {
         if (streamCamera == null) { Debug.LogWarning("[FurnitureSync] camera_rotate received but no Stream Camera assigned."); return; }
         if (msg == null) return;
-        // Turns the camera in place around the world up-axis, like turning
-        // your head — lets you look around without moving position.
         streamCamera.transform.Rotate(Vector3.up, msg.degrees, Space.World);
         Debug.Log($"[FurnitureSync] camera_rotate degrees={msg.degrees} -> camera now facing {streamCamera.transform.eulerAngles}");
     }
-
-    // ---------------- Removing a placed instance ----------------
 
     private void ApplyRemove(RemoveFurnitureMessage msg)
     {
@@ -748,11 +710,6 @@ public class FurnitureSyncManager : MonoBehaviour
 
         if (autoSavePlacedInstances) SavePlacedInstances();
     }
-
-    // ---------------- Swapping the style of ONE specific placed instance ----------------
-    // Unlike ApplySwap (which targets a single type-keyed demo slot), this
-    // targets an exact instance_id — so it stays unambiguous even when
-    // multiple pieces of the same type_id exist (e.g. two beds).
 
     private void ApplySwapInstance(SwapInstanceMessage msg)
     {
@@ -779,13 +736,13 @@ public class FurnitureSyncManager : MonoBehaviour
 
         var t = currentObject.transform;
         Vector3 position = t.position;
-        Quaternion rotation = t.rotation; // preserve however this instance was rotated/placed
+        Quaternion rotation = t.rotation;
         Transform parent = t.parent;
 
         Destroy(currentObject);
 
         GameObject instance = Instantiate(prefab, position, rotation, parent);
-        Vector3 newBaseScale = instance.transform.localScale; // this style's own authored/default scale
+        Vector3 newBaseScale = instance.transform.localScale;
         instance.transform.localScale = newBaseScale * carryMultiplier;
         instance.name = $"{msg.style_name} [{msg.instance_id.Substring(0, Math.Min(6, msg.instance_id.Length))}]";
 
@@ -807,12 +764,6 @@ public class FurnitureSyncManager : MonoBehaviour
         if (autoSavePlacedInstances) SavePlacedInstances();
     }
 
-    // ---------------- On-demand full floor plan capture (for Save Design) ----------------
-    // Unlike the regular streamed frame (whatever the design camera is
-    // currently panned/zoomed to), this temporarily snaps the camera to a
-    // straight-down view that fits the WHOLE room, grabs one high-res
-    // shot, then puts the camera back exactly where it was.
-
     private void CaptureFullFloorPlan()
     {
         Camera cam = floorPlanCamera != null ? floorPlanCamera : streamCamera;
@@ -821,7 +772,7 @@ public class FurnitureSyncManager : MonoBehaviour
             _ = SendJson(new StatusMessage { message = "Can't capture a floor plan — assign a Floor Plan Camera (or at least a Stream Camera)." });
             return;
         }
-        bool borrowingLiveCamera = floorPlanCamera == null; // only true if we had to repurpose the live design camera
+        bool borrowingLiveCamera = floorPlanCamera == null;
 
         Bounds? bounds = ComputeRoomBounds();
         if (bounds == null)
@@ -830,9 +781,6 @@ public class FurnitureSyncManager : MonoBehaviour
             return;
         }
 
-        // Only save/restore camera state if we're temporarily borrowing the
-        // LIVE design camera — a dedicated Floor Plan Camera is never seen
-        // live, so there's nothing that needs preserving on it.
         Vector3 prevPos = cam.transform.position;
         Quaternion prevRot = cam.transform.rotation;
         bool prevOrtho = cam.orthographic;
@@ -846,7 +794,6 @@ public class FurnitureSyncManager : MonoBehaviour
         cam.transform.position = new Vector3(b.center.x, b.max.y + 5f, b.center.z);
         cam.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
         cam.orthographic = true;
-        // pick whichever axis needs more room, with ~10% padding, so the whole room fits either way
         cam.orthographicSize = Mathf.Max(b.extents.z, b.extents.x / aspect) * 1.1f;
 
         var rt = new RenderTexture(w, h, 24);
@@ -874,10 +821,6 @@ public class FurnitureSyncManager : MonoBehaviour
         Destroy(rt);
         Destroy(tex);
 
-        // Gather EVERY currently-placed instance, fresh, with no
-        // behind-camera or off-screen filtering — this is what makes the
-        // PDF's furniture schedule always complete, regardless of what the
-        // live design camera happens to be framing at the time.
         var allItems = new List<InstanceInfo>();
         foreach (var kvp in _placedInstances)
         {
@@ -888,7 +831,9 @@ public class FurnitureSyncManager : MonoBehaviour
             {
                 instance_id = kvp.Key,
                 type_id = slot ? slot.typeId : 0,
+                style_id = slot ? slot.styleId : 0, // <--- ADDED
                 style_name = slot ? slot.label : "",
+                prefab_path = slot ? slot.prefabPath : "", // <--- ADDED
                 world_x = worldPos.x,
                 world_y = worldPos.y,
                 world_z = worldPos.z,
@@ -912,18 +857,12 @@ public class FurnitureSyncManager : MonoBehaviour
             if (kvp.Value == null) continue;
             foreach (var r in kvp.Value.GetComponentsInChildren<Renderer>()) Encapsulate(r.bounds);
         }
-        // Also include whatever's on the floor's layer, so an empty room
-        // still frames sensibly instead of capturing nothing.
         foreach (var r in FindObjectsOfType<Renderer>())
         {
             if (((1 << r.gameObject.layer) & floorLayerMask) != 0) Encapsulate(r.bounds);
         }
         return result;
     }
-
-
-
-    // ---------------- Live view streaming ----------------
 
     private IEnumerator StreamFramesLoop()
     {
@@ -963,16 +902,18 @@ public class FurnitureSyncManager : MonoBehaviour
         {
             if (kvp.Value == null) continue;
             Vector3 vp = streamCamera.WorldToViewportPoint(kvp.Value.transform.position);
-            if (vp.z < 0) continue; // behind the camera, don't show a marker for it
+            if (vp.z < 0) continue;
             var slot = kvp.Value.GetComponent<FurnitureSlot>();
             Vector3 worldPos = kvp.Value.transform.position;
             list.Add(new InstanceInfo
             {
                 instance_id = kvp.Key,
                 type_id = slot ? slot.typeId : 0,
+                style_id = slot ? slot.styleId : 0, // <--- ADDED
                 style_name = slot ? slot.label : "",
+                prefab_path = slot ? slot.prefabPath : "", // <--- ADDED
                 viewport_x = vp.x,
-                viewport_y = 1f - vp.y, // viewport-space -> image-space
+                viewport_y = 1f - vp.y,
                 world_x = worldPos.x,
                 world_y = worldPos.y,
                 world_z = worldPos.z,
@@ -981,14 +922,11 @@ public class FurnitureSyncManager : MonoBehaviour
                 scale_multiplier = slot && slot.scaleMultiplier > 0f ? slot.scaleMultiplier : 1f,
             });
         }
-        // Log roughly once a second (every ~5 calls at 5fps) instead of every frame, so it's visible but not spammy.
         _instanceUpdateLogCounter++;
         if (_instanceUpdateLogCounter % 5 == 0)
             Debug.Log($"[FurnitureSync] Sending instances update: {_placedInstances.Count} tracked, {list.Count} in view.");
         _ = SendJson(new InstancesMessage { items = list.ToArray() });
     }
-
-    // ---------------- Persistence for placed instances ----------------
 
     private void SavePlacedInstances()
     {
@@ -1056,8 +994,7 @@ public class FurnitureSyncManager : MonoBehaviour
                 slot.label = entry.style_name;
                 slot.instanceId = entry.instance_id;
                 slot.prefabPath = entry.prefab_path;
-                // Fall back to the saved final scale (as if scale_multiplier were
-                // always 1) for entries written before base scale was tracked.
+
                 bool hasBaseScale = entry.base_sx != 0f || entry.base_sy != 0f || entry.base_sz != 0f;
                 slot.baseScale = hasBaseScale ? new Vector3(entry.base_sx, entry.base_sy, entry.base_sz) : instance.transform.localScale;
                 slot.scaleMultiplier = entry.scale_multiplier > 0f ? entry.scale_multiplier : 1f;
@@ -1068,8 +1005,6 @@ public class FurnitureSyncManager : MonoBehaviour
         }
         catch (Exception e) { Debug.LogWarning($"[FurnitureSync] Failed to load saved placed instances: {e.Message}"); }
     }
-
-    // ---------------- VR handoff (full-room snapshot) ----------------
 
     private void SaveLayoutAndSignalVr()
     {
