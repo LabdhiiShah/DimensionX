@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Furniture Control — Live Sync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --paper:#F6F2EA; --paper-raised:#FFFFFF; --ink:#1E2420; --ink-soft:#5B6058;
+    --blueprint:#2C5F7C; --blueprint-dim:#DCE7EC; --brass:#B4863A; --brass-dim:#F1E4C9;
+    --ok:#4C7A5E; --ok-dim:#DFEBE3; --line:#DDD6C7;
+    --shadow: 0 1px 2px rgba(30,36,32,0.06), 0 4px 14px rgba(30,36,32,0.05);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
+  .app{max-width:1360px;margin:0 auto;padding:32px 28px 80px;}
+
+  .topbar{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .brand{font-family:'Fraunces',serif;font-weight:600;font-size:30px;letter-spacing:-0.01em;}
+  .brand small{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:400;margin-top:4px;}
+  .status{display:flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .dot{width:9px;height:9px;border-radius:50%;background:#B84C3C;transition:background .2s;}
+  .dot.connecting{background:var(--brass);animation:pulse 1.1s infinite;}
+  .dot.connected{background:var(--ok);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .status input{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);background:var(--paper-raised);padding:5px 8px;border-radius:5px;width:150px;color:var(--ink);}
+  .status button{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);padding:6px 12px;border-radius:5px;cursor:pointer;}
+  .status button:hover{opacity:.85;}
+
+  /* ---- Step tabs ---- */
+  .tabbar{display:flex;gap:10px;margin-bottom:26px;}
+  .tab{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:9px;border:1px solid var(--line);background:var(--paper-raised);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:border-color .12s, background .12s;}
+  .tab:hover{border-color:var(--blueprint);}
+  .tab.active{background:var(--ink);border-color:var(--ink);}
+  .tab-num{font-family:'Fraunces',serif;font-weight:600;font-size:17px;width:26px;height:26px;border-radius:50%;background:var(--blueprint-dim);color:var(--blueprint);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .tab.active .tab-num{background:var(--brass);color:var(--ink);}
+  .tab-text{display:flex;flex-direction:column;}
+  .tab-title{font-weight:600;font-size:14.5px;color:var(--ink);}
+  .tab.active .tab-title{color:var(--paper);}
+  .tab-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;}
+  .tab.active .tab-sub{color:var(--paper);opacity:.65;}
+
+  .layout{display:grid;grid-template-columns:220px 1fr 380px;gap:26px;}
+  .layout.swap-mode{grid-template-columns:220px 1fr;}
+  .vr-layout{max-width:980px;margin:0 auto;}
+  .vr-layout .live-view{aspect-ratio:16/9;}
+  @media (max-width:1100px){.layout, .layout.swap-mode{grid-template-columns:1fr;}}
+
+  .back-link{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);cursor:pointer;background:none;border:none;padding:0;margin-bottom:14px;}
+  .back-link:hover{color:var(--blueprint);}
+  .save-design-button{margin-top:16px;width:100%;font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:500;border:none;background:var(--brass);color:var(--ink);padding:14px;border-radius:8px;cursor:pointer;letter-spacing:.02em;}
+  .save-design-button:hover{opacity:.88;}
+  .save-design-button:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed;}
+  .save-design-hint{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);margin-top:6px;text-align:center;}
+  .tab.disabled{opacity:.45;cursor:not-allowed;}
+  .tab.disabled:hover{border-color:var(--line);}
+
+  .index{border-right:1px solid var(--line);padding-right:18px;}
+  .index-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px;}
+  .type-item{display:flex;align-items:center;gap:10px;padding:9px 9px;border-radius:7px;cursor:pointer;margin-bottom:2px;}
+  .type-item:hover{background:var(--blueprint-dim);}
+  .type-item.active{background:var(--ink);color:var(--paper);}
+  .type-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);width:22px;flex-shrink:0;}
+  .type-item.active .type-code{color:var(--paper);opacity:.6;}
+  .type-name{font-size:14px;font-weight:500;}
+  .type-count{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);}
+  .type-item.active .type-count{color:var(--paper);opacity:.7;}
+
+  .main h2{font-family:'Fraunces',serif;font-weight:600;font-size:24px;margin:0 0 2px;}
+  .main .sub{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);margin-bottom:18px;}
+  .drag-hint{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--blueprint);margin-bottom:14px;}
+
+  .swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;}
+  .swatch{background:var(--paper-raised);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s, border-color .12s;position:relative;}
+  .swatch[draggable="true"]{cursor:grab;}
+  .swatch:hover{transform:translateY(-2px);border-color:var(--blueprint);}
+  .swatch.selected{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok-dim), var(--shadow);}
+  .chip{height:60px;}
+  .swatch-body{padding:10px 12px 12px;}
+  .style-name{font-weight:600;font-size:13.5px;}
+  .prefab-path{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-soft);margin-top:4px;word-break:break-all;line-height:1.4;}
+  .selected-tag{position:absolute;top:8px;right:8px;background:var(--ok);color:white;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:4px;letter-spacing:.04em;}
+
+  .empty{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);padding:30px 0;}
+
+  .live-panel{border-left:1px solid var(--line);padding-left:22px;}
+  .live-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+  .live-view{position:relative;background:#11151a;border-radius:10px;overflow:hidden;box-shadow:var(--shadow);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;border:2px dashed var(--line);}
+  .live-view.drag-over{border-color:var(--ok);box-shadow:0 0 0 3px var(--ok-dim);}
+  .live-view img{width:100%;height:100%;object-fit:cover;display:block;}
+  .live-view .placeholder{color:#8A9199;font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:center;padding:20px;}
+  .drop-marker{position:absolute;width:14px;height:14px;border-radius:50%;background:var(--ok);border:2px solid white;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 3px rgba(76,122,94,.3);}
+  .instance-marker{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--brass);border:2px solid white;transform:translate(-50%,-50%);cursor:pointer;box-shadow:0 0 0 3px rgba(180,134,58,.35);z-index:2;}
+  .instance-marker:hover{transform:translate(-50%,-50%) scale(1.15);}
+  .instance-marker.selected{background:var(--blueprint);box-shadow:0 0 0 4px rgba(44,95,124,.4);animation:pulse 1s infinite;}
+  .live-view.placing-mode{cursor:crosshair;}
+
+  .selection-bar{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding:10px;background:var(--blueprint-dim);border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blueprint);}
+  .selection-bar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .delete-button{font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid #B84C3C;background:white;color:#B84C3C;padding:4px 10px;border-radius:5px;cursor:pointer;flex-shrink:0;}
+  .delete-button:hover{background:#B84C3C;color:white;}
+  .selection-swap-row{display:flex;align-items:center;gap:8px;padding-top:6px;border-top:1px dashed rgba(44,95,124,.25);}
+  .selection-transform-row{display:flex;align-items:center;gap:6px;padding-top:6px;border-top:1px dashed rgba(44,95,124,.25);}
+  .selection-transform-row button{width:24px;height:24px;border:1px solid var(--line);background:white;border-radius:5px;cursor:pointer;font-size:13px;color:var(--ink);}
+  .selection-transform-row button:hover{border-color:var(--blueprint);background:var(--blueprint-dim);}
+  .selection-swap-label{flex-shrink:0;}
+  .selection-swatches{display:flex;gap:6px;flex-wrap:wrap;}
+  .mini-swatch{width:22px;height:22px;border-radius:5px;border:2px solid white;cursor:pointer;box-shadow:0 0 0 1px var(--line);}
+  .mini-swatch:hover{transform:scale(1.1);}
+  .mini-swatch.current{box-shadow:0 0 0 2px var(--blueprint);}
+
+  .cam-controls{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px;}
+  .cam-dpad{display:grid;grid-template-columns:repeat(3,28px);grid-template-rows:repeat(3,28px);gap:2px;}
+  .cam-dpad button{border:1px solid var(--line);background:var(--paper-raised);border-radius:5px;cursor:pointer;font-size:13px;color:var(--ink);}
+  .cam-dpad button:hover{border-color:var(--blueprint);background:var(--blueprint-dim);}
+  .cam-dpad .cam-center{color:var(--ink-soft);cursor:default;}
+  .cam-rotate{display:flex;gap:6px;}
+  .cam-rotate button{width:30px;height:30px;border:1px solid var(--line);background:var(--paper-raised);border-radius:5px;cursor:pointer;font-size:15px;color:var(--ink);}
+  .cam-rotate button:hover{border-color:var(--blueprint);background:var(--blueprint-dim);}
+  .cam-zoom{display:flex;gap:6px;}
+  .cam-zoom button{width:30px;height:30px;border:1px solid var(--line);background:var(--paper-raised);border-radius:5px;cursor:pointer;font-size:16px;color:var(--ink);}
+  .cam-zoom button:hover{border-color:var(--blueprint);background:var(--blueprint-dim);}
+
+  .vr-button{margin-top:14px;width:100%;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;border:none;background:var(--blueprint);color:white;padding:12px;border-radius:8px;cursor:pointer;letter-spacing:.02em;}
+  .vr-button:hover{opacity:.9;}
+  .vr-button:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed;}
+
+  .log{margin-top:22px;border-top:1px solid var(--line);padding-top:12px;max-height:220px;overflow-y:auto;}
+  .log-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px;}
+  .log-entry{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 0;border-bottom:1px dashed var(--line);color:var(--ink-soft);display:flex;gap:8px;}
+  .log-entry .t{color:var(--ink-soft);flex-shrink:0;}
+  .log-entry.ok{color:var(--ok);}
+  .log-entry.err{color:#B84C3C;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const e = React.createElement;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ---- Data (mirrors the dimensionsx Postgres tables: type, style) ----
+const DATA = {"types": [{"type_id": 1, "type_name": "Bed"}, {"type_id": 2, "type_name": "Sofa"}, {"type_id": 3, "type_name": "Chair"}, {"type_id": 4, "type_name": "Desk"}, {"type_id": 5, "type_name": "Table"}, {"type_id": 6, "type_name": "Wadrobe"}, {"type_id": 7, "type_name": "Sink"}, {"type_id": 8, "type_name": "Stove"}, {"type_id": 9, "type_name": "Shower"}, {"type_id": 10, "type_name": "Toilet"}, {"type_id": 11, "type_name": "TV"}, {"type_id": 12, "type_name": "Drawer"}, {"type_id": 13, "type_name": "Lamp"}], "styles": [{"style_id": 1, "type_id": 1, "style_name": "Modern", "prefab_path": "Assets/Furniture/Bed/bedsc.prefab"}, {"style_id": 2, "type_id": 1, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/Bed/Bunkbedsc.prefab"}, {"style_id": 3, "type_id": 2, "style_name": "Modern", "prefab_path": "Assets/Furniture/Sofa/Couch_Large1.prefab"}, {"style_id": 4, "type_id": 2, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/Sofa/Couch_Medium2.prefab"}, {"style_id": 5, "type_id": 2, "style_name": "Minimal", "prefab_path": "Assets/Furniture/Sofa/Couch_Small1.prefab"}, {"style_id": 6, "type_id": 3, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/chair/Sc.prefab"}, {"style_id": 8, "type_id": 4, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/Desk/sc.prefab"}, {"style_id": 9, "type_id": 12, "style_name": "Modern", "prefab_path": "Assets/Furniture/drawer/Drawer_mo.prefab"}, {"style_id": 10, "type_id": 12, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/drawer/drawersc.prefab"}, {"style_id": 11, "type_id": 5, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/table/ScanndinavianSideTable.prefab"}, {"style_id": 12, "type_id": 7, "style_name": "Modern", "prefab_path": "Assets/Furniture/sink/bathroomSinkSquare.prefab"}, {"style_id": 13, "type_id": 7, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/sink/WoodSink1KitchenCabinet1.prefab", "path_truncated_in_source": true}, {"style_id": 14, "type_id": 7, "style_name": "Minimal", "prefab_path": "Assets/Furniture/sink/SteelSink1KitchenCabinet1.prefab", "path_truncated_in_source": true}, {"style_id": 15, "type_id": 8, "style_name": "Modern", "prefab_path": "Assets/Furniture/stove/GasStove1.prefab"}, {"style_id": 16, "type_id": 8, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/stove/Kitchen_Oven_Large.prefab"}, {"style_id": 17, "type_id": 8, "style_name": "Minimal", "prefab_path": "Assets/Furniture/stove/model.prefab"}, {"style_id": 18, "type_id": 9, "style_name": "Modern", "prefab_path": "Assets/Furniture/shower/showerRound.prefab"}, {"style_id": 21, "type_id": 10, "style_name": "Modern", "prefab_path": "Assets/Furniture/toilet/Bathroom_Toilet.prefab"}, {"style_id": 22, "type_id": 10, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/toilet/SIEFRING_Toilet_LP.prefab"}, {"style_id": 23, "type_id": 10, "style_name": "Minimal", "prefab_path": "Assets/Furniture/toilet/toiletSquare.prefab"}, {"style_id": 24, "type_id": 11, "style_name": "Modern", "prefab_path": "Assets/Furniture/tv/TV.prefab"}, {"style_id": 25, "type_id": 11, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/tv/TV_01.prefab"}, {"style_id": 26, "type_id": 13, "style_name": "Modern", "prefab_path": "Assets/Furniture/lamp/FloorLamp1.prefab"}, {"style_id": 27, "type_id": 13, "style_name": "Scandinavian", "prefab_path": "Assets/Furniture/lamp/Light_Ceiling2.prefab"}, {"style_id": 28, "type_id": 13, "style_name": "Minimal", "prefab_path": "Assets/Furniture/lamp/Light_Ceiling4.prefab"}, {"style_id": 29, "type_id": 13, "style_name": "Industrial", "prefab_path": "Assets/Furniture/lamp/Light_Cube2.prefab"}]};
+
+const CHIP_STYLES = {
+  Modern:      'linear-gradient(135deg,#3E4A52,#6B7B85)',
+  Scandinavian:'linear-gradient(135deg,#D9C4A1,#EFE3CC)',
+  Minimal:     'linear-gradient(135deg,#EDEAE2,#FBFAF6)',
+  Industrial:  'linear-gradient(135deg,#2A2A2A,#585858)',
+};
+function chipFor(styleName){ return CHIP_STYLES[styleName] || 'linear-gradient(135deg,#B4863A,#E3C98F)'; }
+
+function useBridgeSocket(url, onFrame, onInstances, onVrFrame, onVrInstances){
+  const [state, setState] = useState('idle');
+  const [log, setLog] = useState([]);
+  const wsRef = useRef(null);
+  const onFrameRef = useRef(onFrame);
+  const onInstancesRef = useRef(onInstances);
+  const onVrFrameRef = useRef(onVrFrame);
+  const onVrInstancesRef = useRef(onVrInstances);
+  const floorPlanResolverRef = useRef(null);
+  onFrameRef.current = onFrame;
+  onInstancesRef.current = onInstances;
+  onVrFrameRef.current = onVrFrame;
+  onVrInstancesRef.current = onVrInstances;
+
+  const addLog = useCallback((text, kind) => {
+    setLog(prev => [{ id: Date.now()+Math.random(), time: new Date().toLocaleTimeString(), text, kind: kind || '' }, ...prev].slice(0, 60));
+  }, []);
+
+  const connect = useCallback(() => {
+    if (wsRef.current) { try { wsRef.current.close(); } catch(e){} }
+    setState('connecting');
+    let socket;
+    try { socket = new WebSocket(url); }
+    catch (err) { setState('error'); addLog('Could not open socket: ' + err.message, 'err'); return; }
+    wsRef.current = socket;
+
+    socket.onopen = () => {
+      setState('connected');
+      addLog('Connected to bridge at ' + url);
+      socket.send(JSON.stringify({ type: 'hello', role: 'web' }));
+    };
+    socket.onclose = () => { setState('idle'); addLog('Disconnected from bridge', 'err'); };
+    socket.onerror = () => { setState('error'); addLog('Socket error — is bridge-server.js running?', 'err'); };
+    socket.onmessage = (evt) => {
+      try {
+        const msg = JSON.parse(evt.data);
+        if (msg.type === 'frame') { onFrameRef.current && onFrameRef.current(msg); return; }
+        if (msg.type === 'instances') { onInstancesRef.current && onInstancesRef.current(msg); return; }
+        if (msg.type === 'vr_frame') { onVrFrameRef.current && onVrFrameRef.current(msg); return; }
+        if (msg.type === 'vr_instances') { onVrInstancesRef.current && onVrInstancesRef.current(msg); return; }
+        if (msg.type === 'floorplan_snapshot') {
+          if (floorPlanResolverRef.current) {
+            floorPlanResolverRef.current({ image: 'data:image/jpeg;base64,' + msg.image, items: msg.items || [] });
+            floorPlanResolverRef.current = null;
+          }
+          return;
+        }
+        if (msg.type === 'swap_result') {
+          addLog('Unity ' + (msg.success ? 'applied' : 'rejected') + ' swap for type_id ' + msg.type_id + (msg.message ? ' — ' + msg.message : ''), msg.success ? 'ok' : 'err');
+        } else if (msg.type === 'place_result') {
+          addLog('Unity ' + (msg.success ? 'placed' : 'rejected placement') + (msg.message ? ' — ' + msg.message : ''), msg.success ? 'ok' : 'err');
+        } else if (msg.type === 'move_result') {
+          addLog('Unity ' + (msg.success ? 'moved' : 'rejected move') + (msg.message ? ' — ' + msg.message : ''), msg.success ? 'ok' : 'err');
+        } else if (msg.type === 'remove_result') {
+          addLog('Unity ' + (msg.success ? 'removed' : 'rejected removal') + (msg.message ? ' — ' + msg.message : ''), msg.success ? 'ok' : 'err');
+        } else if (msg.type === 'swap_instance_result') {
+          addLog('Unity ' + (msg.success ? 'swapped' : 'rejected swap') + (msg.message ? ' — ' + msg.message : ''), msg.success ? 'ok' : 'err');
+        } else if (msg.type === 'instance_transform_result') {
+          if (!msg.success) addLog('Unity rejected transform' + (msg.message ? ' — ' + msg.message : ''), 'err');
+        } else if (msg.type === 'status') {
+          addLog('Status: ' + (msg.message || JSON.stringify(msg)));
+        }
+      } catch(err) { /* ignore non-JSON */ }
+    };
+  }, [url, addLog]);
+
+  useEffect(() => { connect(); return () => { if (wsRef.current) wsRef.current.close(); }; }, [connect]);
+
+  const send = useCallback((payload) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) { wsRef.current.send(JSON.stringify(payload)); return true; }
+    addLog('Not connected — command not sent', 'err');
+    return false;
+  }, [addLog]);
+
+  const captureFloorPlan = useCallback((timeoutMs = 6000) => {
+    return new Promise((resolve) => {
+      const finish = (result) => { floorPlanResolverRef.current = null; resolve(result); };
+      floorPlanResolverRef.current = finish;
+      const sent = send({ type: 'capture_floorplan' });
+      if (!sent) { finish(null); return; }
+      setTimeout(() => { if (floorPlanResolverRef.current === finish) finish(null); }, timeoutMs);
+    });
+  }, [send]);
+
+  return { state, log, send, reconnect: connect, captureFloorPlan };
+}
+
+// ---------------- Shared bits ----------------
+
+function TypeIndex({ types, stylesByType, activeType, onSelect }){
+  return e('div', { className: 'index' },
+    e('div', { className: 'index-label' }, 'Furniture types'),
+    types.map(t => {
+      const count = (stylesByType[t.type_id] || []).length;
+      return e('div', { key: t.type_id, className: 'type-item' + (t.type_id === activeType ? ' active' : ''), onClick: () => onSelect(t.type_id) },
+        e('span', { className: 'type-code' }, String(t.type_id).padStart(2, '0')),
+        e('span', { className: 'type-name' }, t.type_name),
+        e('span', { className: 'type-count' }, count)
+      );
+    })
+  );
+}
+
+function LogPanel({ log }){
+  return e('div', { className: 'log' },
+    e('div', { className: 'log-label' }, 'Activity'),
+    log.length === 0
+      ? e('div', { className: 'empty' }, 'Nothing yet.')
+      : log.map(entry => e('div', { key: entry.id, className: 'log-entry ' + entry.kind },
+          e('span', { className: 't' }, entry.time), e('span', null, entry.text)
+        ))
+  );
+}
+
+// ---------------- Step 1: Place Furniture ----------------
+
+function DesignStep({ DATA, stylesByType, activeType, setActiveType, currentType, currentStyles, bridge, frameSrc, instances, onLaunchVr }){
+  const [dragOver, setDragOver] = useState(false);
+  const [dropMarker, setDropMarker] = useState(null);
+  const [selectedInstance, setSelectedInstance] = useState(null);
+  const [locallyHidden, setLocallyHidden] = useState(() => new Set());
+  const liveViewRef = useRef(null);
+
+  const selectedInfo = (instances || []).find(i => i.instance_id === selectedInstance) || null;
+  const visibleInstances = (instances || []).filter(i => !locallyHidden.has(i.instance_id));
+
+  // Once Unity's broadcast no longer includes a hidden id, it's genuinely
+  // gone server-side — stop tracking it locally so the Set doesn't grow forever.
+  useEffect(() => {
+    if (locallyHidden.size === 0) return;
+    const stillPresent = new Set((instances || []).map(i => i.instance_id));
+    setLocallyHidden(prev => {
+      const next = new Set([...prev].filter(id => stillPresent.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [instances]);
+
+  function onSwatchDragStart(ev, style, typeName){
+    ev.dataTransfer.setData('application/json', JSON.stringify(Object.assign({}, style, { type_name: typeName })));
+    ev.dataTransfer.effectAllowed = 'copy';
+  }
+  function onLiveViewDragOver(ev){
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = 'copy';
+    setDragOver(true);
+    const rect = liveViewRef.current.getBoundingClientRect();
+    setDropMarker({ x: ((ev.clientX - rect.left) / rect.width) * 100, y: ((ev.clientY - rect.top) / rect.height) * 100 });
+  }
+  function onLiveViewDrop(ev){
+    ev.preventDefault();
+    setDragOver(false);
+    setDropMarker(null);
+    let style;
+    try { style = JSON.parse(ev.dataTransfer.getData('application/json')); } catch (e) { return; }
+    const rect = liveViewRef.current.getBoundingClientRect();
+    bridge.send({
+      type: 'place_furniture',
+      type_id: style.type_id, type_name: style.type_name,
+      style_id: style.style_id, style_name: style.style_name,
+      prefab_path: style.prefab_path,
+      viewport_x: (ev.clientX - rect.left) / rect.width,
+      viewport_y: (ev.clientY - rect.top) / rect.height,
+    });
+  }
+  function onMarkerClick(ev, instanceId){
+    ev.stopPropagation(); // don't also trigger the live-view's relocate-click below
+    setSelectedInstance(prev => prev === instanceId ? null : instanceId);
+  }
+  function onLiveViewClick(ev){
+    if (!selectedInstance) return; // plain click with nothing selected does nothing
+    const rect = liveViewRef.current.getBoundingClientRect();
+    bridge.send({
+      type: 'move_furniture', instance_id: selectedInstance,
+      viewport_x: (ev.clientX - rect.left) / rect.width,
+      viewport_y: (ev.clientY - rect.top) / rect.height,
+    });
+    setSelectedInstance(null);
+  }
+  function deleteSelected(){
+    if (!selectedInstance) return;
+    setLocallyHidden(prev => new Set(prev).add(selectedInstance)); // hide instantly, don't wait for Unity's next broadcast
+    bridge.send({ type: 'remove_furniture', instance_id: selectedInstance });
+    setSelectedInstance(null);
+  }
+  function swapSelected(style){
+    if (!selectedInstance) return;
+    bridge.send({ type: 'swap_instance', instance_id: selectedInstance, style_id: style.style_id, style_name: style.style_name, prefab_path: style.prefab_path });
+  }
+  function rotateSelected(degrees){
+    if (!selectedInstance) return;
+    bridge.send({ type: 'rotate_instance', instance_id: selectedInstance, degrees });
+  }
+  function scaleSelected(delta){
+    if (!selectedInstance) return;
+    bridge.send({ type: 'scale_instance', instance_id: selectedInstance, delta });
+  }
+  function launchVr(){ bridge.send({ type: 'launch_vr' }); onLaunchVr && onLaunchVr(); }
+  function pan(dx, dz){ bridge.send({ type: 'camera_pan', dx, dz }); }
+  function zoom(delta){ bridge.send({ type: 'camera_zoom', delta }); }
+  function rotate(degrees){ bridge.send({ type: 'camera_rotate', degrees }); }
+
+  return e('div', { className: 'layout' },
+    e(TypeIndex, { types: DATA.types, stylesByType, activeType, onSelect: setActiveType }),
+
+    e('div', { className: 'main' },
+      e('h2', null, currentType ? currentType.type_name : ''),
+      e('div', { className: 'sub' }, 'type_id ' + activeType + ' · ' + currentStyles.length + ' style' + (currentStyles.length !== 1 ? 's' : '') + ' in catalog'),
+      e('div', { className: 'drag-hint' }, '↳ drag a swatch to place it · click a dot then click a new spot to move it'),
+      currentStyles.length === 0
+        ? e('div', { className: 'empty' }, 'No styles recorded for this type yet in the catalog.')
+        : e('div', { className: 'swatch-grid' },
+            currentStyles.map(s => e('div', {
+                key: s.style_id, className: 'swatch', draggable: true,
+                onDragStart: (ev) => onSwatchDragStart(ev, s, currentType.type_name),
+              },
+              e('div', { className: 'chip', style: { background: chipFor(s.style_name) } }),
+              e('div', { className: 'swatch-body' },
+                e('div', { className: 'style-name' }, s.style_name),
+                e('div', { className: 'prefab-path' }, s.prefab_path)
+              )
+            ))
+          )
+    ),
+
+    e('div', { className: 'live-panel' },
+      e('div', { className: 'live-label' }, e('span', null, 'Live Unity view'), e('span', null, bridge.state === 'connected' ? '● streaming' : '○ waiting')),
+      e('div', {
+          className: 'live-view' + (dragOver ? ' drag-over' : '') + (selectedInstance ? ' placing-mode' : ''), ref: liveViewRef,
+          onDragOver: onLiveViewDragOver, onDragLeave: () => { setDragOver(false); setDropMarker(null); }, onDrop: onLiveViewDrop,
+          onClick: onLiveViewClick,
+        },
+        frameSrc
+          ? e('img', { src: frameSrc, draggable: false })
+          : e('div', { className: 'placeholder' }, 'Waiting for a frame from Unity…\n(needs Stream Camera assigned on FurnitureSyncManager)'),
+        visibleInstances.map(inst => e('div', {
+            key: inst.instance_id,
+            onClick: (ev) => onMarkerClick(ev, inst.instance_id),
+            className: 'instance-marker' + (inst.instance_id === selectedInstance ? ' selected' : ''),
+            style: { left: (inst.viewport_x * 100) + '%', top: (inst.viewport_y * 100) + '%' },
+            title: inst.style_name + (inst.instance_id === selectedInstance ? ' — click a spot to move it here' : ' — click to select'),
+          })
+        ),
+        dropMarker ? e('div', { className: 'drop-marker', style: { left: dropMarker.x + '%', top: dropMarker.y + '%' } }) : null
+      ),
+
+      selectedInfo ? e('div', { className: 'selection-bar' },
+        e('div', { className: 'selection-bar-row' },
+          e('span', null, 'Selected: ' + selectedInfo.style_name + ' — click the room to move it'),
+          e('button', { className: 'delete-button', onClick: deleteSelected }, 'Delete')
+        ),
+        e('div', { className: 'selection-transform-row' },
+          e('span', { className: 'selection-swap-label' }, 'Rotate:'),
+          e('button', { onClick: () => rotateSelected(-15) }, '⟲'),
+          e('button', { onClick: () => rotateSelected(15) }, '⟳'),
+          e('span', { className: 'selection-swap-label', style: { marginLeft: '10px' } }, 'Size:'),
+          e('button', { onClick: () => scaleSelected(-0.1) }, '−'),
+          e('button', { onClick: () => scaleSelected(0.1) }, '+')
+        ),
+        (stylesByType[selectedInfo.type_id] || []).length > 1
+          ? e('div', { className: 'selection-swap-row' },
+              e('span', { className: 'selection-swap-label' }, 'Swap style:'),
+              e('div', { className: 'selection-swatches' },
+                (stylesByType[selectedInfo.type_id] || []).map(s => e('div', {
+                    key: s.style_id,
+                    className: 'mini-swatch' + (s.style_name === selectedInfo.style_name ? ' current' : ''),
+                    style: { background: chipFor(s.style_name) },
+                    onClick: () => swapSelected(s),
+                    title: s.style_name,
+                  })
+                )
+              )
+            )
+          : null
+      ) : null,
+
+      e('div', { className: 'cam-controls' },
+        e('div', { className: 'cam-dpad' },
+          e('span'),
+          e('button', { onClick: () => pan(0, 1) }, '↑'),
+          e('span'),
+          e('button', { onClick: () => pan(-1, 0) }, '←'),
+          e('button', { className: 'cam-center', disabled: true }, '⊕'),
+          e('button', { onClick: () => pan(1, 0) }, '→'),
+          e('span'),
+          e('button', { onClick: () => pan(0, -1) }, '↓'),
+          e('span')
+        ),
+        e('div', { className: 'cam-rotate' },
+          e('button', { onClick: () => rotate(-15), title: 'Rotate left' }, '⟲'),
+          e('button', { onClick: () => rotate(15), title: 'Rotate right' }, '⟳')
+        ),
+        e('div', { className: 'cam-zoom' },
+          e('button', { onClick: () => zoom(1) }, '+'),
+          e('button', { onClick: () => zoom(-1) }, '−')
+        )
+      ),
+
+      e('button', { className: 'vr-button', onClick: launchVr, disabled: bridge.state !== 'connected' }, 'View in VR'),
+      e(LogPanel, { log: bridge.log })
+    )
+  );
+}
+
+// ---------------- PDF export: floor plan + furniture schedule ----------------
+
+function buildAndDownloadDesignPdf(instances, DATA, frameSrc){
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('PDF library did not load — check your internet connection and try again.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 40;
+  let y = margin;
+
+  const typeNameFor = (typeId) => { const t = DATA.types.find(t => t.type_id === typeId); return t ? t.type_name : ('Type ' + typeId); };
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+  doc.text('Furniture Design — Build Sheet', margin, y); y += 22;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(90);
+  doc.text('Generated ' + new Date().toLocaleString(), margin, y); y += 24;
+  doc.setTextColor(20);
+
+  // Floor plan snapshot — a fresh straight-down capture of the WHOLE room
+  // (requested from Unity right when Save Design is pressed), not just
+  // whatever the live view happened to be framing.
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+  doc.text('Floor Plan (top view)', margin, y); y += 8;
+  if (frameSrc){
+    const imgWidth = pageWidth - margin * 2;
+    const imgHeight = imgWidth * 9 / 16;
+    doc.addImage(frameSrc, 'JPEG', margin, y + 6, imgWidth, imgHeight);
+    y += imgHeight + 22;
+  } else {
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(10);
+    doc.text('(Floor plan capture was unavailable — connect to Unity and try again.)', margin, y + 14);
+    y += 30;
+  }
+
+  // Furniture schedule table
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+  doc.text('Furniture Schedule (' + (instances || []).length + ' item' + ((instances || []).length !== 1 ? 's' : '') + ')', margin, y); y += 16;
+
+  const cols = [
+    { label: '#', width: 22 },
+    { label: 'Type', width: 78 },
+    { label: 'Style', width: 82 },
+    { label: 'Position (x, y, z)', width: 118 },
+    { label: 'Rotation', width: 52 },
+    { label: 'Scale', width: 50 },
+    { label: 'Size', width: 50 },
+  ];
+  const rowHeight = 18;
+  function drawHeaderRow(){
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+    let x = margin;
+    cols.forEach(c => { doc.text(c.label, x, y); x += c.width; });
+    y += 6;
+    doc.setDrawColor(210); doc.line(margin, y, pageWidth - margin, y);
+    y += 12;
+    doc.setFont('helvetica', 'normal');
+  }
+  drawHeaderRow();
+  (instances || []).forEach((inst, i) => {
+    if (y > doc.internal.pageSize.getHeight() - margin) { doc.addPage(); y = margin; drawHeaderRow(); }
+    let x = margin;
+    const cells = [
+      String(i + 1),
+      typeNameFor(inst.type_id),
+      inst.style_name || '—',
+      '(' + (inst.world_x ?? 0).toFixed(2) + ', ' + (inst.world_y ?? 0).toFixed(2) + ', ' + (inst.world_z ?? 0).toFixed(2) + ')',
+      (inst.rotation_y_deg ?? 0).toFixed(0) + '°',
+      (inst.scale ?? 1).toFixed(2) + ' units',
+      Math.round((inst.scale_multiplier ?? 1) * 100) + '%',
+    ];
+    cells.forEach((val, ci) => { doc.text(String(val), x, y); x += cols[ci].width; });
+    y += rowHeight;
+  });
+
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(120);
+  doc.text('Scale = raw local-scale units (exact rebuild value) · Size = % of that piece\'s original imported size.', margin, y + 4);
+
+  doc.save('furniture-design-' + new Date().toISOString().slice(0, 10) + '.pdf');
+}
+
+// ---------------- Step 2: VR Walkthrough (spectate only + Save Design) ----------------
+
+function VrWatchStep({ bridge, vrFrameSrc, designInstances, designFrameSrc, DATA, onBack }){
+  const [savingPdf, setSavingPdf] = useState(false);
+
+  async function handleSaveDesign(){
+    setSavingPdf(true);
+    try {
+      const captured = await bridge.captureFloorPlan();
+      const floorPlanImg = captured ? captured.image : null;
+      const items = (captured && captured.items && captured.items.length > 0) ? captured.items : designInstances;
+      buildAndDownloadDesignPdf(items, DATA, floorPlanImg || designFrameSrc);
+    } finally {
+      setSavingPdf(false);
+    }
+  }
+
+  return e('div', { className: 'vr-layout' },
+    e('div', { className: 'main' },
+      e('button', { className: 'back-link', onClick: onBack }, '← Back to design'),
+      e('h2', null, 'VR Walkthrough'),
+      e('div', { className: 'sub' }, 'Live feed from whoever is currently in the headset — this view is spectate-only; it isn\'t controlled from the website'),
+
+      e('div', { className: 'live-view vr-live-view' },
+        vrFrameSrc
+          ? e('img', { src: vrFrameSrc, draggable: false })
+          : e('div', { className: 'placeholder' }, 'Waiting for a frame from the VR build…\n(needs VrSyncManager running with its own Stream Camera assigned, and the VR build launched)')
+      ),
+
+      e('button', {
+          className: 'save-design-button',
+          onClick: handleSaveDesign,
+          disabled: savingPdf || !designInstances || designInstances.length === 0,
+        },
+        savingPdf ? 'Capturing floor plan…' : 'Save Design (PDF)'
+      ),
+      e('div', { className: 'save-design-hint' }, (designInstances || []).length + ' piece' + ((designInstances || []).length !== 1 ? 's' : '') + ' placed · floor plan + furniture schedule, ready to build from'),
+
+      e(LogPanel, { log: bridge.log })
+    )
+  );
+}
+
+// ---------------- App shell with tabs ----------------
+
+function App(){
+  const [wsUrl, setWsUrl] = useState('ws://localhost:8765');
+  const [page, setPage] = useState('design'); // 'design' | 'vr'
+  const [hasLaunchedVr, setHasLaunchedVr] = useState(false);
+  const [activeType, setActiveType] = useState(DATA.types[0] ? DATA.types[0].type_id : null);
+  const [frameSrc, setFrameSrc] = useState(null);
+  const [instances, setInstances] = useState([]);
+  const [vrFrameSrc, setVrFrameSrc] = useState(null);
+  const [vrInstances, setVrInstances] = useState([]);
+
+  const handleFrame = useCallback((msg) => { setFrameSrc('data:image/jpeg;base64,' + msg.image); }, []);
+  const handleInstances = useCallback((msg) => { setInstances(msg.items || []); }, []);
+  const handleVrFrame = useCallback((msg) => { setVrFrameSrc('data:image/jpeg;base64,' + msg.image); }, []);
+  const handleVrInstances = useCallback((msg) => { setVrInstances(msg.items || []); }, []);
+  const bridge = useBridgeSocket(wsUrl, handleFrame, handleInstances, handleVrFrame, handleVrInstances);
+
+  const stylesByType = useMemo(() => {
+    const map = {};
+    DATA.styles.forEach(s => { (map[s.type_id] = map[s.type_id] || []).push(s); });
+    return map;
+  }, []);
+
+  const currentType = DATA.types.find(t => t.type_id === activeType);
+  const currentStyles = stylesByType[activeType] || [];
+
+  function goToVr(){ setHasLaunchedVr(true); setPage('vr'); }
+  function goToDesign(){ setPage('design'); }
+
+  return e('div', { className: 'app' },
+    e('div', { className: 'topbar' },
+      e('div', { className: 'brand' }, 'Furniture Control', e('small', null, 'Live sync — dimensionsx catalog')),
+      e('div', { className: 'status' },
+        e('span', { className: 'dot ' + bridge.state }),
+        e('span', null, bridge.state === 'connected' ? 'Connected to bridge' : bridge.state === 'connecting' ? 'Connecting…' : 'Not connected'),
+        e('input', { value: wsUrl, onChange: ev => setWsUrl(ev.target.value) }),
+        e('button', { onClick: bridge.reconnect }, 'Reconnect')
+      )
+    ),
+
+    e('div', { className: 'tabbar' },
+      e('div', { className: 'tab' + (page === 'design' ? ' active' : ''), onClick: () => setPage('design') },
+        e('span', { className: 'tab-num' }, '1'),
+        e('span', { className: 'tab-text' }, e('span', { className: 'tab-title' }, 'Design Room'), e('span', { className: 'tab-sub' }, 'drag, drop, rotate, resize, swap styles'))
+      ),
+      e('div', {
+          className: 'tab' + (page === 'vr' ? ' active' : '') + (hasLaunchedVr ? '' : ' disabled'),
+          onClick: () => { if (hasLaunchedVr) setPage('vr'); },
+          title: hasLaunchedVr ? '' : 'Press "View in VR" on the Design Room first',
+        },
+        e('span', { className: 'tab-num' }, '2'),
+        e('span', { className: 'tab-text' }, e('span', { className: 'tab-title' }, 'VR Walkthrough'), e('span', { className: 'tab-sub' }, 'live feed + save design'))
+      )
+    ),
+
+    page === 'design'
+      ? e(DesignStep, { DATA, stylesByType, activeType, setActiveType, currentType, currentStyles, bridge, frameSrc, instances, onLaunchVr: goToVr })
+      : e(VrWatchStep, { bridge, vrFrameSrc, designInstances: instances, designFrameSrc: frameSrc, DATA, onBack: goToDesign })
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+</script>
+</body>
+</html>

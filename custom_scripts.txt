@@ -1,0 +1,8 @@
+D:\end game\DimensionsX\Assets\Editor\FurnitureCatalogWindow.cs
+D:\end game\DimensionsX\Assets\Samples\XR Interaction Toolkit\3.0.11\XR Device Simulator\Scripts\XRDeviceSimulatorControllerUI.cs
+D:\end game\DimensionsX\Assets\Samples\XR Interaction Toolkit\3.0.11\XR Device Simulator\Scripts\XRDeviceSimulatorHandsUI.cs
+D:\end game\DimensionsX\Assets\Samples\XR Interaction Toolkit\3.0.11\XR Device Simulator\Scripts\XRDeviceSimulatorUI.cs
+D:\end game\DimensionsX\Assets\Script\Furniturelyoutmodels.cs
+D:\end game\DimensionsX\Assets\Script\Furnitureslot.cs
+D:\end game\DimensionsX\Assets\Script\Furnituresyncmanager.cs
+D:\end game\DimensionsX\Assets\Script\VrSyncManager.cs
