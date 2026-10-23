@@ -32,11 +32,24 @@ export default function AdminDashboard() {
   const [employees, setEmployees] = useState([]);
   const [section, setSection] = useState('projects');
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null); 
   const [loading, setLoading] = useState(true);
   const [employeesLoading, setEmployeesLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  
+  // NEW: State to track which row's kebab menu is open
+  const [activeMenu, setActiveMenu] = useState(null);
+
+  const [formErrors, setFormErrors] = useState({});
   const [form, setForm] = useState(EMPTY_FORM);
+
+  // NEW: Close kebab menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenu(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     projectsApi.list()
@@ -55,6 +68,9 @@ export default function AdminDashboard() {
 
   async function openAddProject() {
     setError('');
+    setFormErrors({});
+    setForm(EMPTY_FORM); 
+    setEditingId(null);  
     setEmployeesLoading(true);
     setShowForm(true);
     try {
@@ -67,33 +83,127 @@ export default function AdminDashboard() {
     }
   }
 
-  async function createProject(event) {
-    event.preventDefault();
+  async function openEditProject(project) {
     setError('');
+    setFormErrors({});
+    setEditingId(project.id);
+    setForm({
+      projectName: project.projectName || '',
+      clientName: project.clientName || '',
+      designerEmployeeId: project.designerEmployeeId || '',
+      description: project.description || '',
+      clientContact: project.clientContact || '',
+      siteAddress: project.siteAddress || '',
+      dueDate: project.dueDate || '',
+    });
+    setEmployeesLoading(true);
+    setShowForm(true);
+    try {
+      const data = await employeesApi.list();
+      setEmployees(data.employees || []);
+    } catch (err) {
+      setError(err.message || 'Could not load registered employees.');
+    } finally {
+      setEmployeesLoading(false);
+    }
+  }
+
+  async function handleDeleteProject(projectId, e) {
+    e.stopPropagation(); 
+    if (!window.confirm("Are you sure you want to delete this project? This cannot be undone.")) return;
+    
+    try {
+      await projectsApi.delete(projectId);
+      setProjects((current) => current.filter((p) => p.id !== projectId));
+    } catch (err) {
+      setError(err.message || 'Failed to delete project.');
+    }
+  }
+
+  const validateForm = () => {
+    const errors = {};
+    if (!form.projectName.trim()) errors.projectName = 'Project name is required.';
+    if (!form.clientName.trim()) errors.clientName = 'Client name is required.';
+    if (!form.designerEmployeeId) errors.designerEmployeeId = 'Please select a designer.';
+
+    if (!form.dueDate) {
+      errors.dueDate = 'Due date is required.';
+    } else {
+      const selectedDate = new Date(form.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate < today && !editingId) { 
+        errors.dueDate = 'Due date cannot be in the past.';
+      }
+    }
+
+    if (!form.clientContact.trim()) {
+      errors.clientContact = 'Client contact is required.';
+    } else {
+      const phoneRegex = /^\+?[\d\s-]{10,}$/;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!phoneRegex.test(form.clientContact) && !emailRegex.test(form.clientContact)) {
+        errors.clientContact = 'Enter a valid phone number or email.';
+      }
+    }
+
+    if (!form.siteAddress.trim()) {
+      errors.siteAddress = 'Site address is required.';
+    }
+    return errors;
+  };
+
+  async function createOrUpdateProject(event) {
+    event.preventDefault();
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setError('');
+    setFormErrors({});
     setSaving(true);
+    
     try {
       const employee = employees.find((item) => String(item.employeeId) === String(form.designerEmployeeId));
       if (!employee) throw new Error('Please select a registered designer.');
-      const result = await projectsApi.create({
+      
+      const payload = {
         ...form,
         designerName: employee.fullName || employee.employeeId,
-      });
-      setProjects((current) => [result.project, ...current]);
+      };
+
+      if (editingId) {
+        const result = await projectsApi.update(editingId, payload);
+        setProjects((current) => current.map((p) => p.id === editingId ? result.project : p));
+      } else {
+        const result = await projectsApi.create(payload);
+        setProjects((current) => [result.project, ...current]);
+      }
+      
       setShowForm(false);
       setForm(EMPTY_FORM);
+      setEditingId(null);
+      setFormErrors({});
     } catch (err) {
-      setError(err.message || 'Could not create project.');
+      setError(err.message || `Could not ${editingId ? 'update' : 'create'} project.`);
     } finally {
       setSaving(false);
     }
   }
 
-  // --- NEW: Handle marking a project as completed ---
+  const handleInputChange = (field, value) => {
+    setForm({ ...form, [field]: value });
+    if (formErrors[field]) {
+      setFormErrors({ ...formErrors, [field]: null });
+    }
+  };
+
   async function markAsCompleted(projectId, e) {
-    e.stopPropagation(); // Prevent the row click from opening the project
+    e.stopPropagation(); 
     try {
-      const result = await projectsApi.updateStatus(projectId, 'completed');
-      // Update local state instantly so the UI reflects the change
+      await projectsApi.updateStatus(projectId, 'completed');
       setProjects((current) => 
         current.map((p) => p.id === projectId ? { ...p, status: 'completed' } : p)
       );
@@ -108,6 +218,12 @@ export default function AdminDashboard() {
   }
 
   const urgentProjects = getUrgentProjects(projects);
+
+  const getInputStyle = (field) => ({
+    borderColor: formErrors[field] ? '#ff4d4f' : '#ccc',
+    outline: 'none',
+    boxShadow: formErrors[field] ? '0 0 0 2px rgba(255, 77, 79, 0.2)' : 'none'
+  });
 
   return (
     <main className="admin-page">
@@ -148,11 +264,12 @@ export default function AdminDashboard() {
                     <th>Due Date</th>
                     <th>Status</th>
                     <th>Designer</th>
+                    <th style={{ width: '50px' }}></th> {/* Empty header for kebab menu */}
                   </tr>
                 </thead>
                 <tbody>
-                  {loading ? <tr><td colSpan="5" className="admin-empty">Loading projects...</td></tr>
-                    : projects.length === 0 ? <tr><td colSpan="5" className="admin-empty">No projects yet. Click “+ Add Project” to begin.</td></tr>
+                  {loading ? <tr><td colSpan="6" className="admin-empty">Loading projects...</td></tr>
+                    : projects.length === 0 ? <tr><td colSpan="6" className="admin-empty">No projects yet. Click “+ Add Project” to begin.</td></tr>
                     : projects.map((project) => {
                       const overdue = isOverdue(project.dueDate);
                       return (
@@ -166,6 +283,34 @@ export default function AdminDashboard() {
                             {project.status || 'active'}
                           </td>
                           <td>{project.designerName || '—'}</td>
+                          
+                          {/* NEW: Kebab Menu */}
+                          <td style={{ position: 'relative', textAlign: 'right', paddingRight: '20px' }}>
+                            <div style={{ position: 'relative', display: 'inline-block' }}>
+                              <button 
+                                className={`kebab-button ${activeMenu === project.id ? 'active' : ''}`}
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  setActiveMenu(activeMenu === project.id ? null : project.id); 
+                                }}
+                              >
+                                &#8942;
+                              </button>
+                              
+                              {activeMenu === project.id && (
+                                <div className="kebab-menu" onClick={(e) => e.stopPropagation()}>
+                                  <button onClick={() => { setActiveMenu(null); openEditProject(project); }}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    Edit Project
+                                  </button>
+                                  <button className="delete-option" onClick={(e) => { setActiveMenu(null); handleDeleteProject(project.id, e); }}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    Delete Project
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
                         </tr>
                       );
                     })}
@@ -185,6 +330,7 @@ export default function AdminDashboard() {
             </section>
           )}
 
+          {/* NOTIFICATIONS TAB */}
           {/* NOTIFICATIONS TAB */}
           {section === 'notifications' && (
             <section className="admin-table-card" style={{ padding: '24px' }}>
@@ -219,14 +365,10 @@ export default function AdminDashboard() {
                             {status.text}
                           </span>
                           
-                          {/* NEW BUTTON TO MARK AS COMPLETED */}
+                          {/* UPDATED BUTTON USING THE NEW CLASS */}
                           <button 
                             onClick={(e) => markAsCompleted(project.id, e)}
-                            style={{
-                              backgroundColor: '#28a745', color: 'white', border: 'none',
-                              padding: '8px 12px', borderRadius: '6px', cursor: 'pointer',
-                              fontSize: '13px', fontWeight: 'bold'
-                            }}
+                            className="mark-completed-btn"
                           >
                             Mark Completed
                           </button>
@@ -241,29 +383,63 @@ export default function AdminDashboard() {
         </section>
       </div>
 
-      {/* ADD PROJECT MODAL */}
+      {/* ADD / EDIT PROJECT MODAL */}
       {showForm && (
         <div className="admin-overlay" onMouseDown={() => !saving && setShowForm(false)}>
-          <form className="admin-form" onSubmit={createProject} onMouseDown={(event) => event.stopPropagation()}>
+          <form className="admin-form" onSubmit={createOrUpdateProject} onMouseDown={(event) => event.stopPropagation()}>
             <button type="button" className="admin-close" onClick={() => !saving && setShowForm(false)}>×</button>
-            <h2>Add Project</h2>
-            <label>Project Name<input required maxLength={200} value={form.projectName} onChange={(e) => setForm({ ...form, projectName: e.target.value })} /></label>
-            <label>Client Name<input required maxLength={200} value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} /></label>
-            <label>Designer
-              <select required value={form.designerEmployeeId} disabled={employeesLoading || employees.length === 0}
-                onChange={(e) => setForm({ ...form, designerEmployeeId: e.target.value })}>
+            <h2>{editingId ? 'Edit Project' : 'Add Project'}</h2>
+            
+            <label>
+              Project Name
+              <input required maxLength={200} value={form.projectName} onChange={(e) => handleInputChange('projectName', e.target.value)} style={getInputStyle('projectName')} />
+              {formErrors.projectName && <span className="admin-field-error">{formErrors.projectName}</span>}
+            </label>
+
+            <label>
+              Client Name
+              <input required maxLength={200} value={form.clientName} onChange={(e) => handleInputChange('clientName', e.target.value)} style={getInputStyle('clientName')} />
+              {formErrors.clientName && <span className="admin-field-error">{formErrors.clientName}</span>}
+            </label>
+
+            <label>
+              Designer
+              <select required value={form.designerEmployeeId} disabled={employeesLoading || employees.length === 0} onChange={(e) => handleInputChange('designerEmployeeId', e.target.value)} style={getInputStyle('designerEmployeeId')}>
                 <option value="">{employeesLoading ? 'Loading employees…' : employees.length ? 'Select a registered employee' : 'No employees found'}</option>
                 {employees.map((employee) => <option key={employee.employeeId} value={employee.employeeId}>
                   {employee.fullName || employee.employeeId}{employee.email ? ` — ${employee.email}` : ''}
                 </option>)}
               </select>
+              {formErrors.designerEmployeeId && <span className="admin-field-error">{formErrors.designerEmployeeId}</span>}
             </label>
             {!employeesLoading && employees.length === 0 && <p className="admin-error">No employees are available. Check the server endpoint and confirm the employee has is_admin = false and a non-empty employee_id.</p>}
-            <label>Client Contact<input maxLength={200} value={form.clientContact} onChange={(e) => setForm({ ...form, clientContact: e.target.value })} /></label>
-            <label>Site Address<input maxLength={300} value={form.siteAddress} onChange={(e) => setForm({ ...form, siteAddress: e.target.value })} /></label>
-            <label>Due Date<input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></label>
-            <label>Description<textarea rows="3" maxLength={4000} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
-            <button className="admin-submit" type="submit" disabled={saving || employeesLoading || employees.length === 0}>{saving ? 'Creating…' : 'Create Project'}</button>
+
+            <label>
+              Client Contact (Phone or Email)
+              <input required maxLength={200} value={form.clientContact} onChange={(e) => handleInputChange('clientContact', e.target.value)} style={getInputStyle('clientContact')} />
+              {formErrors.clientContact && <span className="admin-field-error">{formErrors.clientContact}</span>}
+            </label>
+
+            <label>
+              Site Address
+              <input required maxLength={300} value={form.siteAddress} onChange={(e) => handleInputChange('siteAddress', e.target.value)} style={getInputStyle('siteAddress')} />
+              {formErrors.siteAddress && <span className="admin-field-error">{formErrors.siteAddress}</span>}
+            </label>
+
+            <label>
+              Due Date
+              <input type="date" value={form.dueDate} onChange={(e) => handleInputChange('dueDate', e.target.value)} style={getInputStyle('dueDate')} />
+              {formErrors.dueDate && <span className="admin-field-error">{formErrors.dueDate}</span>}
+            </label>
+
+            <label>
+              Description
+              <textarea rows="3" maxLength={4000} value={form.description} onChange={(e) => handleInputChange('description', e.target.value)} />
+            </label>
+
+            <button className="admin-submit" type="submit" disabled={saving || employeesLoading || employees.length === 0}>
+              {saving ? (editingId ? 'Saving…' : 'Creating…') : (editingId ? 'Save Changes' : 'Create Project')}
+            </button>
           </form>
         </div>
       )}

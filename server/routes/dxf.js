@@ -1,127 +1,119 @@
 const express = require('express');
+const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
-// const pool = require('../db'); // Uncomment if saving paths to DB later
+const util = require('util');
+const execPromise = util.promisify(exec);
+const db = require('../db');
 
-const router = express.Router();
-
-// 1. Ensure local uploads folder exists
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-
-// 2. Configure Multer (Storage Engine)
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOAD_DIR);
+  destination: function (req, file, cb) {
+    const projectId = req.body.projectId || 'unknown';
+    const dir = path.join(__dirname, '..', 'uploads', String(projectId));
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
   },
-  filename: (req, file, cb) => {
-    // Save as: projectId_timestamp.dxf
-    const projectId = req.body.projectId || 'temp';
-    cb(null, `${projectId}_${Date.now()}.dxf`);
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
   }
 });
 
-// File filter to ensure only DXF is uploaded
 const upload = multer({ 
-  storage,
+  storage: storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (path.extname(file.originalname).toLowerCase() !== '.dxf') {
       return cb(new Error('Only .dxf files are allowed'));
     }
     cb(null, true);
-  },
-  limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit (matches frontend)
+  }
 });
 
-// 3. The Upload & Process Route
-router.post('/upload', upload.single('dxfFile'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded.' });
-  }
+router.post('/upload', upload.single('dxfFile'), async (req, res) => {
+  try {
+    const { projectId } = req.body;
+    const file = req.file;
 
-  const projectId = req.body.projectId || 'temp';
-  const dxfPath = req.file.path;
-  
-  // Define paths for the output files
-  const projectOutputDir = path.join(UPLOAD_DIR, projectId);
-  if (!fs.existsSync(projectOutputDir)) {
-    fs.mkdirSync(projectOutputDir, { recursive: true });
-  }
-
-  const jsonPath = path.join(projectOutputDir, 'architecture.json');
-  const glbDir = projectOutputDir;
-
-  // Clean up any old GLB files in this folder before generating a new one
-  // This prevents accidentally returning a previous model if the new one fails
-  const existingFiles = fs.readdirSync(glbDir);
-  existingFiles.forEach(file => {
-    if (file.endsWith('.glb') || file.endsWith('.obj') || file.endsWith('.mtl')) {
-      fs.unlinkSync(path.join(glbDir, file));
-    }
-  });
-
-  // --- Points to the root-level dxf_parser folder ---
-  const pythonExe = 'python'; 
-  const dxfParserDir = path.join(__dirname, '..', '..', 'dxf_parser'); 
-  const jsonScript = path.join(dxfParserDir, 'dimensionx_dxf_to_json.py');
-  const exportScript = path.join(dxfParserDir, 'export_3d.py');
-
-  console.log(`[DXF Pipeline] Processing ${req.file.originalname}...`);
-
-  // Step A: Run DXF -> JSON (Validation & Parsing)
-  const cmdJson = `${pythonExe} "${jsonScript}" "${dxfPath}" --output "${jsonPath}"`;
-  
-  exec(cmdJson, { cwd: dxfParserDir }, (err, stdout, stderr) => {
-    if (err) {
-      console.error('[DXF Pipeline] JSON Gen Failed:', stderr || err.message);
-      return res.status(400).json({ 
-        error: 'DXF Validation failed. Please ensure the file follows the standard layers.',
-        details: stderr
-      });
+    if (!file) return res.status(400).json({ error: 'Please upload a file' });
+    if (!projectId || projectId === 'temp_project' || projectId === 'undefined') {
+      return res.status(400).json({ error: 'Valid projectId is required.' });
     }
 
-    console.log(`[DXF Pipeline] JSON generated. Running 3D export...`);
+    const projectFolder = path.join(__dirname, '..', 'uploads', String(projectId));
+    const absoluteDxfPath = path.join(projectFolder, file.filename);
+    const relativeDxfPath = `/uploads/${projectId}/${file.filename}`;
+    const baseName = path.parse(file.filename).name; // e.g., "1BHK_09"
 
-    // Step B: Run JSON -> GLB (3D Generation)
-    const cmdGlb = `${pythonExe} "${exportScript}" "${jsonPath}" "${glbDir}"`;
+    await db.query(`UPDATE projects SET dxf_file_path = $1 WHERE id = $2`, [relativeDxfPath, projectId]);
+
+    console.log("1. Generating JSON from DXF...");
+    // Run Python to generate JSON
+    await execPromise(`python ../dxf_parser/dimensionx_dxf_to_json.py "${absoluteDxfPath}"`);
     
-    exec(cmdGlb, { cwd: dxfParserDir }, (err2, stdout2, stderr2) => {
-      if (err2) {
-        console.error('[DXF Pipeline] GLB Gen Failed:', stderr2 || err2.message);
-        return res.status(500).json({ 
-          error: 'Failed to generate 3D model from DXF.',
-          details: stderr2
-        });
+    const expectedJsonPath = path.join(projectFolder, `${baseName}_architecture.json`);
+    
+    if (!fs.existsSync(expectedJsonPath)) {
+        throw new Error("Python script did not generate the JSON file.");
+    }
+
+    console.log("2. Generating GLB from JSON...");
+    // Run Python to generate GLB (Pass the JSON path and the output directory)
+    await execPromise(`python ../dxf_parser/export_3d.py "${expectedJsonPath}" "${projectFolder}"`);
+
+    const expectedGlbPath = path.join(projectFolder, `${baseName}.glb`);
+    
+    let glbUrl = null;
+    let parsedPlan = null;
+    let jsonPath = `/uploads/${projectId}/${baseName}_architecture.json`;
+
+    // Read the JSON for the database
+    const jsonContent = fs.readFileSync(expectedJsonPath, 'utf8');
+    parsedPlan = JSON.parse(jsonContent);
+
+    if (fs.existsSync(expectedGlbPath)) {
+      glbUrl = `/uploads/${projectId}/${baseName}.glb`;
+      console.log("✅ GLB generated successfully:", glbUrl);
+    } else {
+      throw new Error("GLB generation failed.");
+    }
+
+    // Cleanup: Delete unwanted files (obj, mtl, etc.)
+    const files = fs.readdirSync(projectFolder);
+    files.forEach(f => {
+      const ext = path.extname(f).toLowerCase();
+      if (!['.dxf', '.glb', '.json'].includes(ext)) {
+        fs.unlinkSync(path.join(projectFolder, f));
+        console.log(`Deleted unwanted file: ${f}`);
       }
-
-      // Dynamically find the generated GLB file (it might be named 1BHK_01.glb, etc.)
-      const filesInDir = fs.readdirSync(glbDir);
-      const glbFile = filesInDir.find(f => f.endsWith('.glb'));
-
-      if (!glbFile) {
-         return res.status(500).json({ error: 'Pipeline finished but no GLB file was generated.' });
-      }
-
-      const finalGlbPath = path.join(glbDir, glbFile);
-      
-      // Create a URL for the frontend to access via HTTP
-      const glbUrl = `/uploads/${projectId}/${glbFile}`;
-
-      console.log(`[DXF Pipeline] Success! Generated: ${glbFile}`);
-
-      res.json({
-        success: true,
-        message: 'DXF Processed successfully',
-        glbPath: finalGlbPath,
-        jsonPath: jsonPath,
-        glbUrl: glbUrl 
-      });
     });
-  });
+
+    // Update Database
+    const updateQuery = `
+      UPDATE projects 
+      SET glb_url = $1, plan = $2
+      WHERE id = $3 
+      RETURNING *;
+    `;
+    
+    const result = await db.query(updateQuery, [
+      glbUrl, 
+      parsedPlan ? JSON.stringify(parsedPlan) : null,
+      projectId
+    ]);
+
+    res.status(200).json({ 
+      message: 'Processed successfully', 
+      project: result.rows[0],
+      glbUrl: glbUrl,
+      jsonPath: jsonPath 
+    });
+
+  } catch (error) {
+    console.error("❌ Server error:", error);
+    res.status(500).json({ error: 'Processing failed', details: error.message });
+  }
 });
 
 module.exports = router;

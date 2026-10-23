@@ -7,13 +7,8 @@ export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const getUser = () => {
   try { return JSON.parse(localStorage.getItem(USER_KEY)) || null; } catch { return null; }
 };
-export function saveSession({
-  token,
-  username,
-  fullName,
-  email,
-  isAdmin,
-}) {
+
+export function saveSession({ token, username, fullName, email, isAdmin }) {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(
     USER_KEY,
@@ -25,6 +20,7 @@ export function saveSession({
     })
   );
 }
+
 export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
@@ -69,12 +65,18 @@ export const authApi = {
 export const projectsApi = {
   list: () => request('/projects'),
   create: (project) => request('/projects', { method: 'POST', body: project }),
-  // Fixed to use the centralized request wrapper
   updateStatus: (projectId, status) => 
-    request(`/projects/${projectId}/status`, { 
-      method: 'PATCH', 
-      body: { status } 
-    }),
+    request(`/projects/${projectId}/status`, { method: 'PATCH', body: { status } }),
+  
+  // Save furniture layout
+  saveLayout: (projectId, layout) => 
+    request(`/projects/${projectId}/layout`, { method: 'PUT', body: { layout } }),
+
+  // NEW: Edit and Delete
+  update: (projectId, project) => 
+    request(`/projects/${projectId}`, { method: 'PUT', body: project }),
+  delete: (projectId) => 
+    request(`/projects/${projectId}`, { method: 'DELETE' }),
 };
 
 export const employeesApi = {

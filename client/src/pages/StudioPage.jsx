@@ -5,29 +5,24 @@ import DashboardPage from './DashboardPage.jsx';
 import DesignPage from './DesignPage.jsx';
 import VrPage from './VrPage.jsx';
 import { useBridgeSocket } from '../hooks/useBridgeSocket.js';
-import { clearSession } from '../lib/api.js';
+import { clearSession, projectsApi } from '../lib/api.js'; // <-- Import projectsApi
 
-// Set VITE_BRIDGE_URL in a .env file if your bridge isn't on this machine.
 const BRIDGE_URL = import.meta.env.VITE_BRIDGE_URL || 'ws://localhost:8765';
-
-// Unity downloads the generated GLB over HTTP from the Express server, so it needs an ABSOLUTE
-// url. Defaults to the API host minus "/api". Set VITE_ASSET_ORIGIN if Unity runs on another machine.
 const ASSET_ORIGIN = (import.meta.env.VITE_ASSET_ORIGIN || import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
 
-// This is the old Unity-module App.jsx, unchanged except: LOGOUT now really logs out,
-// and there is a link back to the project list.
 export default function StudioPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const project = state?.project;
-  const glbPath = state?.glbUrl || null;   // set by UploadDxfPage after the DXF was converted
-  const plan = state?.plan || null;        // spawn point / footprint centre for the cameras
+  
+  // Fallback to the database fields if state wasn't passed
+  const glbPath = state?.glbUrl || project?.glb_url || null;   
+  const plan = state?.plan || project?.plan || null;        
 
-  const [page, setPage] = useState('dashboard'); // 'dashboard' | 'design' | 'vr'
-  const [frameSrc, setFrameSrc] = useState(null);       // Interior Camera (drag and drop view)
-  const [instances, setInstances] = useState([]);       // pieces placed via this website
-  const [vrFrameSrc, setVrFrameSrc] = useState(null);   // headset / simulator camera
-  // none = opened without an upload (old static room) | waiting | loading | ready | error
+  const [page, setPage] = useState('dashboard'); 
+  const [frameSrc, setFrameSrc] = useState(null);       
+  const [instances, setInstances] = useState([]);       
+  const [vrFrameSrc, setVrFrameSrc] = useState(null);   
   const [floorplan, setFloorplan] = useState({ state: glbPath ? 'loading' : 'none', message: '' });
 
   const handlers = {
@@ -41,21 +36,37 @@ export default function StudioPage() {
   const bridge = useBridgeSocket(BRIDGE_URL, handlers);
   const { send: bridgeSend, state: bridgeState } = bridge;
 
-  // Hand the uploaded floor plan to Unity as soon as the bridge is up (and again after a reconnect;
-  // Unity ignores a model it already has and just re-announces "ready").
   useEffect(() => {
-    if (!glbPath || bridgeState !== 'connected') return;
+    if (!glbPath) {
+        setFloorplan({ state: 'error', message: 'No 3D model (GLB) was found for this project. Upload a floor plan first.' });
+        return;
+    }
+    
+    if (bridgeState !== 'connected') return;
+
     setFloorplan({ state: 'loading', message: 'Sending floor plan to Unity...' });
     bridgeSend({
       type: 'load_floorplan',
       glb_url: ASSET_ORIGIN + glbPath,
       project_id: String(project?.id ?? 'temp'),
       plan,
+      // NEW: Send the saved furniture layout to Unity
+      saved_furniture: project?.furniture_layout || [] 
     });
-  }, [glbPath, bridgeState]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [glbPath, bridgeState]);
 
+  // NEW: Function to save layout to database
+  const saveLayout = async () => {
+    if (!project?.id) return;
+    try {
+      await projectsApi.saveLayout(project.id, instances);
+      alert("Layout saved successfully to the database!");
+    } catch (err) {
+      alert("Failed to save layout: " + err.message);
+    }
+  };
+  
   const generateVr = () => {
-    // Unity snapshots the layout; the bridge also tells the in-scene VR rig to start the walkthrough.
     bridge.send({ type: 'launch_vr' });
     setPage('vr');
   };
@@ -77,8 +88,19 @@ export default function StudioPage() {
         <button className="back-link" onClick={() => navigate('/projects')}>&larr; All projects</button>
         {project && <span className="studio-hint"> {project.projectName} for {project.clientName}</span>}
       </div>
+      
       {page === 'dashboard' && <DashboardPage frameSrc={frameSrc} bridgeState={bridge.state} floorplan={floorplan} onStart={() => setPage('design')} />}
-      {page === 'design' && <DesignPage bridge={bridge} frameSrc={frameSrc} instances={instances} onGenerateVr={generateVr} />}
+      
+      {page === 'design' && (
+        <DesignPage 
+          bridge={bridge} 
+          frameSrc={frameSrc} 
+          instances={instances} 
+          onGenerateVr={generateVr} 
+          onSaveLayout={saveLayout} // <-- Pass the save function
+        />
+      )}
+      
       {page === 'vr' && <VrPage bridge={bridge} frameSrc={frameSrc} vrFrameSrc={vrFrameSrc} instances={instances} onBack={leaveVr} />}
     </div>
   );

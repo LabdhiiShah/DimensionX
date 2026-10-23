@@ -111,32 +111,6 @@ class ObjBuilder:
         glb_path.write_bytes(scene.export(file_type="glb"))
         print(f"  Wrote GLB: {glb_path.name} ({len(scene.geometry)} nodes)")
 
-    def save_obj(self, obj_path: Path):
-        """Merged OBJ fallback for tools that can't read GLB."""
-        with obj_path.open("w") as f:
-            f.write(f"mtllib {obj_path.with_suffix('.mtl').name}\n")
-            offset = 0
-            last_mat = None
-            for name, data in self.elements.items():
-                for vx, vy, vz in data["verts"]:
-                    f.write(f"v {vx:.5f} {vy:.5f} {vz:.5f}\n")
-                for face in data["faces"]:
-                    if data["material"] != last_mat:
-                        f.write(f"usemtl {data['material']}\n")
-                        last_mat = data["material"]
-                    f.write("f " + " ".join(str(i + 1 + offset) for i in face) + "\n")
-                offset += len(data["verts"])
-
-        with obj_path.with_suffix(".mtl").open("w") as f:
-            written = set()
-            for data in self.elements.values():
-                mat = data["material"]
-                if mat in written:
-                    continue
-                r, g, b = MATERIALS.get(mat, (0.8, 0.8, 0.8))
-                f.write(f"newmtl {mat}\nKd {r} {g} {b}\nKa 0 0 0\nKs 0 0 0\nNs 10\n\n")
-                written.add(mat)
-
 
 def add_box(b, cx, cy, cz, len_m, thick_m, height_m, angle_rad):
     ca, sa = math.cos(angle_rad), math.sin(angle_rad)
@@ -298,11 +272,8 @@ def export_plan(json_path: Path, out_dir: Path):
     # --- SAVE ---
     glb_path = out_dir / f"{plan_id}.glb"
     b.save_glb(glb_path)
-    obj_path = out_dir / f"{plan_id}.obj"
-    b.save_obj(obj_path)
-    print(f"  {json_path.name} -> {plan_id}.glb + .obj + .mtl "
+    print(f"  {json_path.name} -> {plan_id}.glb "
           f"({len(b.elements)} elements, {sum(len(e['verts']) for e in b.elements.values())} verts)")
-
 
 def main():
     if len(sys.argv) < 2:

@@ -3,17 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import CinzelFont from '../components/CinzelFont.jsx';
 import { projectsApi, clearSession, getUser } from '../lib/api.js';
 
-const FLOW_KEY = 'dimensionx_project_flow_v1';
-
-function hasCompletedUpload(project) {
-  try {
-    const saved = JSON.parse(localStorage.getItem(FLOW_KEY) || '{}');
-    return Boolean(saved[String(project.id)]?.validated);
-  } catch {
-    return false;
-  }
-}
-
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const user = getUser();
@@ -41,10 +30,18 @@ export default function ProjectsPage() {
   }, [navigate]);
 
   const logout = () => { clearSession(); navigate('/'); };
+
   const openProject = (project) => {
-    const route = hasCompletedUpload(project) ? '/studio' : '/upload-dxf';
-    navigate(route, { state: { project } });
+    // Always go to the details/upload page first
+    navigate('/upload-dxf', { 
+      state: { 
+        project, 
+        glbUrl: project.glb_url, 
+        plan: project.plan 
+      } 
+    });
   };
+
   const value = (project, camel, snake) => project[camel] ?? project[snake];
   const formatDate = (dateValue) => {
     if (!dateValue) return '';
@@ -70,7 +67,7 @@ export default function ProjectsPage() {
         <section className="mb-8">
           <p className="text-[#800a1d]/70 font-sans text-xs sm:text-sm tracking-[0.2em] mb-2">EMPLOYEE WORKSPACE</p>
           <h1 className="text-[#800a1d] font-cinzel font-bold text-3xl sm:text-4xl tracking-widest">WELCOME, {displayName.toUpperCase()}</h1>
-          <p className="font-sans text-sm sm:text-base text-[#6b5b60] mt-3 max-w-2xl">Select a project to upload its floor plan or continue working on an existing model.</p>
+          <p className="font-sans text-sm sm:text-base text-[#6b5b60] mt-3 max-w-2xl">Select a project to view its details and upload its floor plan.</p>
         </section>
 
         <section className="bg-[#cdeef2] rounded-3xl p-5 sm:p-8 shadow-sm">
@@ -98,7 +95,10 @@ export default function ProjectsPage() {
                 const clientName = value(project, 'clientName', 'client_name');
                 const dueDate = value(project, 'dueDate', 'due_date');
                 const siteAddress = value(project, 'siteAddress', 'site_address');
-                const uploaded = hasCompletedUpload(project);
+                const glb = value(project, 'glbUrl', 'glb_url');
+                const dxf = value(project, 'dxfFilePath', 'dxf_file_path');
+                const isUploaded = Boolean(glb || dxf);
+
                 return (
                   <article key={project.id} className="flex flex-col bg-white rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow border border-[#800a1d]/5">
                     <div className="flex items-start justify-between gap-3">
@@ -106,7 +106,9 @@ export default function ProjectsPage() {
                         <p className="font-sans text-[10px] font-bold tracking-[0.18em] text-[#800a1d]/60 uppercase">Assigned project</p>
                         <h3 className="text-[#800a1d] font-cinzel font-bold text-lg tracking-wide mt-2 break-words">{projectName}</h3>
                       </div>
-                      <span className="shrink-0 rounded-full bg-[#cdeef2] px-3 py-1 text-[10px] font-sans font-bold tracking-wider text-[#800a1d]">{uploaded ? 'PLAN ADDED' : 'ASSIGNED'}</span>
+                      <span className="shrink-0 rounded-full bg-[#cdeef2] px-3 py-1 text-[10px] font-sans font-bold tracking-wider text-[#800a1d]">
+                        {isUploaded ? 'MODEL READY' : 'ASSIGNED'}
+                      </span>
                     </div>
                     {project.description && <p className="font-sans text-sm text-[#6b5b60] mt-3">{project.description}</p>}
                     <div className="mt-5 space-y-2 font-sans text-sm">
@@ -114,7 +116,10 @@ export default function ProjectsPage() {
                       {dueDate && <div className="flex gap-2"><span className="text-[#800a1d]/60 min-w-16">Due date</span><span className="text-[#34272b] font-medium">{formatDate(dueDate)}</span></div>}
                       {siteAddress && <div className="flex gap-2"><span className="text-[#800a1d]/60 min-w-16">Location</span><span className="text-[#34272b] font-medium break-words">{siteAddress}</span></div>}
                     </div>
-                    <button type="button" onClick={() => openProject(project)} className="mt-6 w-full bg-[#800a1d] text-white font-cinzel font-bold text-xs tracking-[0.15em] px-5 py-3 rounded-full hover:bg-[#600716] transition-colors">{uploaded ? 'OPEN DESIGN STUDIO' : 'UPLOAD FLOOR PLAN'}</button>
+                    <button type="button" onClick={() => openProject(project)} className="mt-6 w-full bg-[#800a1d] text-white font-cinzel font-bold text-xs tracking-[0.15em] px-5 py-3 rounded-full hover:bg-[#600716] transition-colors">
+                      {/* Changed text to VIEW DETAILS */}
+                      {isUploaded ? 'VIEW DETAILS' : 'UPLOAD FLOOR PLAN'}
+                    </button>
                   </article>
                 );
               })}

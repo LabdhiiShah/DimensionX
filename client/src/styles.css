@@ -142,8 +142,24 @@ button { font-family: inherit; }
 .back-link { background: none; border: 0; padding: 0; margin: 0 0 12px; color: var(--maroon); font-weight: 600; font-size: 13px; cursor: pointer; }
 .back-link:hover { text-decoration: underline; }
 .two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
-.save-bar { display: block; width: 100%; margin-top: 18px; background: var(--pink); color: var(--ink); border: 0; border-radius: 10px; padding: 22px; font-size: 15px; font-weight: 700; letter-spacing: .08em; cursor: pointer; }
-.save-bar:hover:not(:disabled) { filter: brightness(.95); }
+.save-bar { 
+  display: block; 
+  width: 100%; 
+  margin-top: 18px; 
+  background: var(--maroon); /* Changed from var(--pink) */
+  color: #fff;               /* Changed from var(--ink) */
+  border: 0; 
+  border-radius: 10px; 
+  padding: 22px; 
+  font-size: 15px; 
+  font-weight: 700; 
+  letter-spacing: .08em; 
+  cursor: pointer; 
+  transition: background-color 0.2s ease;
+}
+.save-bar:hover:not(:disabled) { 
+  background: var(--maroon-dark); /* Darker burgundy on hover */
+}
 
 /* ---------- Activity log ---------- */
 .activity { margin-top: 22px; font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 12px; }

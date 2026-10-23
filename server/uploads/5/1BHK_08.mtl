@@ -11,109 +11,73 @@ Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W001
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W002
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W003
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W004
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W005
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W006
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W007
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W008
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W009
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W010
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W011
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10
 
 newmtl DX_Wall_W012
-Kd 0.76 0.74 0.7
-Ka 0 0 0
-Ks 0 0 0
-Ns 10
-
-newmtl DX_Wall_W013
-Kd 0.76 0.74 0.7
-Ka 0 0 0
-Ks 0 0 0
-Ns 10
-
-newmtl DX_Wall_W014
-Kd 0.76 0.74 0.7
-Ka 0 0 0
-Ks 0 0 0
-Ns 10
-
-newmtl DX_Wall_W015
-Kd 0.76 0.74 0.7
-Ka 0 0 0
-Ks 0 0 0
-Ns 10
-
-newmtl DX_Wall_W016
-Kd 0.76 0.74 0.7
-Ka 0 0 0
-Ks 0 0 0
-Ns 10
-
-newmtl DX_Wall_W017
-Kd 0.76 0.74 0.7
-Ka 0 0 0
-Ks 0 0 0
-Ns 10
-
-newmtl DX_Wall_W018
-Kd 0.76 0.74 0.7
+Kd 0.78 0.85 0.78
 Ka 0 0 0
 Ks 0 0 0
 Ns 10

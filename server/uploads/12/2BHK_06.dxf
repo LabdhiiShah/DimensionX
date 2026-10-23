@@ -553,7 +553,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-122
+133
   9
 $SURFTAB1
  70
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{0828D604-ADC0-4E23-BDA3-DD9F070F71AC}
+{1EEA90A0-0CB8-42CF-922B-44E839F0AE46}
   9
 $VERSIONGUID
   2
-{99DAACB9-9357-4899-B0A6-5B0C3B235FBA}
+{C4BCF8B9-998A-4A96-A5DA-36695290F739}
   9
 $EXTNAMES
 290
@@ -3439,7 +3439,7 @@ DIMENSIONX
   0
 APPID
   5
-11F
+130
 330
 3
 100
@@ -3453,7 +3453,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-120
+131
 330
 3
 100
@@ -5583,23 +5583,23 @@ AcDbPolyline
  20
 0.0
  10
-28.0
+31.0
  20
 0.0
  10
-28.0
+31.0
  20
-26.0
+33.0
  10
 0.0
  20
-26.0
+33.0
 1001
 DIMENSIONX
 1000
-bhk=1
+bhk=2
 1000
-plan_id=1BHK_06
+plan_id=2BHK_06
 1000
 units=feet
 1000
@@ -5609,11 +5609,11 @@ wall_height=10.000000
 1000
 wall_thickness=0.500000
 1000
-width_ft=28.000000
+width_ft=31.000000
 1000
-depth_ft=26.000000
+depth_ft=33.000000
 1000
-template=spine
+template=corridor
   0
 LINE
   5
@@ -5633,7 +5633,7 @@ AcDbLine
  30
 0.0
  11
-11.48
+12.4
  21
 0.0
  31
@@ -5675,7 +5675,7 @@ AcDbLine
  11
 0.0
  21
-9.62
+12.87
  31
 0.0
 1001
@@ -5707,13 +5707,13 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-11.48
+12.4
  20
 0.0
  30
 0.0
  11
-28.0
+31.0
  21
 0.0
  31
@@ -5747,15 +5747,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-11.48
+12.4
  20
 0.0
  30
 0.0
  11
-11.48
+12.4
  21
-9.62
+12.87
  31
 0.0
 1001
@@ -5787,15 +5787,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-28.0
+31.0
  20
 0.0
  30
 0.0
  11
-28.0
+31.0
  21
-14.56
+12.87
  31
 0.0
 1001
@@ -5829,13 +5829,13 @@ AcDbLine
  10
 0.0
  20
-9.62
+12.87
  30
 0.0
  11
-11.48
+6.82
  21
-9.62
+12.87
  31
 0.0
 1001
@@ -5853,7 +5853,7 @@ exterior=0
 1000
 side=interior
 1000
-room_ids=kitchen,passage
+room_ids=common_toilet,kitchen
   0
 LINE
   5
@@ -5869,13 +5869,13 @@ AcDbLine
  10
 0.0
  20
-9.62
+12.87
  30
 0.0
  11
 0.0
  21
-14.56
+21.12
  31
 0.0
 1001
@@ -5893,7 +5893,7 @@ exterior=1
 1000
 side=left
 1000
-room_ids=passage
+room_ids=common_toilet
   0
 LINE
   5
@@ -5907,15 +5907,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-11.48
+6.82
  20
-9.62
+12.87
  30
 0.0
  11
-11.48
+12.4
  21
-14.56
+12.87
  31
 0.0
 1001
@@ -5933,7 +5933,7 @@ exterior=0
 1000
 side=interior
 1000
-room_ids=living_dining,passage
+room_ids=kitchen,passage
   0
 LINE
   5
@@ -5947,15 +5947,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-0.0
+6.82
  20
-14.56
+12.87
  30
 0.0
  11
-5.88
+6.82
  21
-14.56
+21.12
  31
 0.0
 1001
@@ -5973,7 +5973,7 @@ exterior=0
 1000
 side=interior
 1000
-room_ids=passage,utility
+room_ids=common_toilet,passage
   0
 LINE
   5
@@ -5987,15 +5987,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-0.0
+12.4
  20
-14.56
+12.87
  30
 0.0
  11
-0.0
+24.18
  21
-26.0
+12.87
  31
 0.0
 1001
@@ -6009,11 +6009,11 @@ thickness_ft=0.500000
 1000
 height_ft=10.000000
 1000
-exterior=1
+exterior=0
 1000
-side=left
+side=interior
 1000
-room_ids=utility
+room_ids=living_dining,passage
   0
 LINE
   5
@@ -6027,15 +6027,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-5.88
+24.18
  20
-14.56
+12.87
  30
 0.0
  11
-11.48
+31.0
  21
-14.56
+12.87
  31
 0.0
 1001
@@ -6053,7 +6053,7 @@ exterior=0
 1000
 side=interior
 1000
-room_ids=bathroom,passage
+room_ids=foyer,living_dining
   0
 LINE
   5
@@ -6067,15 +6067,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-5.88
+24.18
  20
-14.56
+12.87
  30
 0.0
  11
-5.88
+24.18
  21
-26.0
+21.12
  31
 0.0
 1001
@@ -6093,7 +6093,7 @@ exterior=0
 1000
 side=interior
 1000
-room_ids=bathroom,utility
+room_ids=foyer,passage
   0
 LINE
   5
@@ -6107,15 +6107,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-11.48
+31.0
  20
-14.56
+12.87
  30
 0.0
  11
-28.0
+31.0
  21
-14.56
+21.12
  31
 0.0
 1001
@@ -6129,11 +6129,11 @@ thickness_ft=0.500000
 1000
 height_ft=10.000000
 1000
-exterior=0
+exterior=1
 1000
-side=interior
+side=right
 1000
-room_ids=living_dining,master_bedroom
+room_ids=foyer
   0
 LINE
   5
@@ -6147,15 +6147,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-11.48
+0.0
  20
-14.56
+21.12
  30
 0.0
  11
-11.48
+6.82
  21
-26.0
+21.12
  31
 0.0
 1001
@@ -6173,7 +6173,7 @@ exterior=0
 1000
 side=interior
 1000
-room_ids=bathroom,master_bedroom
+room_ids=common_toilet,ensuite_toilet
   0
 LINE
   5
@@ -6187,15 +6187,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-28.0
+0.0
  20
-14.56
+21.12
  30
 0.0
  11
-28.0
+0.0
  21
-26.0
+33.0
  31
 0.0
 1001
@@ -6211,9 +6211,9 @@ height_ft=10.000000
 1000
 exterior=1
 1000
-side=right
+side=left
 1000
-room_ids=master_bedroom
+room_ids=ensuite_toilet
   0
 LINE
   5
@@ -6227,15 +6227,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-0.0
+6.82
  20
-26.0
+21.12
  30
 0.0
  11
-5.88
+17.36
  21
-26.0
+21.12
  31
 0.0
 1001
@@ -6249,11 +6249,11 @@ thickness_ft=0.500000
 1000
 height_ft=10.000000
 1000
-exterior=1
+exterior=0
 1000
-side=top
+side=interior
 1000
-room_ids=utility
+room_ids=master_bedroom,passage
   0
 LINE
   5
@@ -6267,15 +6267,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-5.88
+6.82
  20
-26.0
+21.12
  30
 0.0
  11
-11.48
+6.82
  21
-26.0
+33.0
  31
 0.0
 1001
@@ -6289,11 +6289,11 @@ thickness_ft=0.500000
 1000
 height_ft=10.000000
 1000
-exterior=1
+exterior=0
 1000
-side=top
+side=interior
 1000
-room_ids=bathroom
+room_ids=ensuite_toilet,master_bedroom
   0
 LINE
   5
@@ -6307,15 +6307,15 @@ DX_WALL_AXIS
 100
 AcDbLine
  10
-11.48
+17.36
  20
-26.0
+21.12
  30
 0.0
  11
-28.0
+24.18
  21
-26.0
+21.12
  31
 0.0
 1001
@@ -6329,13 +6329,13 @@ thickness_ft=0.500000
 1000
 height_ft=10.000000
 1000
-exterior=1
+exterior=0
 1000
-side=top
+side=interior
 1000
-room_ids=master_bedroom
+room_ids=bedroom_2,passage
   0
-LWPOLYLINE
+LINE
   5
 AC
 330
@@ -6343,43 +6343,39 @@ AC
 100
 AcDbEntity
   8
-DX_ROOM_ZONE
+DX_WALL_AXIS
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbLine
  10
-28.0
+17.36
  20
+21.12
+ 30
 0.0
- 10
-11.48
- 20
+ 11
+17.36
+ 21
+33.0
+ 31
 0.0
- 10
-11.48
- 20
-14.560000000000002
- 10
-28.0
- 20
-14.560000000000002
 1001
 DIMENSIONX
 1000
-room_id=living_dining
+kind=wall
 1000
-name=LIVING / DINING
+id=W019
 1000
-role=living
+thickness_ft=0.500000
 1000
-area_sqft=240.531200
+height_ft=10.000000
 1000
-plan_id=1BHK_06
+exterior=0
+1000
+side=interior
+1000
+room_ids=bedroom_2,master_bedroom
   0
-MTEXT
+LINE
   5
 AD
 330
@@ -6387,25 +6383,39 @@ AD
 100
 AcDbEntity
   8
-DX_ROOM_LABEL
+DX_WALL_AXIS
 100
-AcDbMText
+AcDbLine
  10
-19.74
+24.18
  20
-7.280000000000002
+21.12
  30
 0.0
- 40
-0.62
- 41
-14.5376
- 71
-5
-  1
-LIVING / DINING\P16'-06" x 14'-07"
+ 11
+31.0
+ 21
+21.12
+ 31
+0.0
+1001
+DIMENSIONX
+1000
+kind=wall
+1000
+id=W020
+1000
+thickness_ft=0.500000
+1000
+height_ft=10.000000
+1000
+exterior=0
+1000
+side=interior
+1000
+room_ids=bedroom_2,foyer
   0
-LWPOLYLINE
+LINE
   5
 AE
 330
@@ -6413,43 +6423,39 @@ AE
 100
 AcDbEntity
   8
-DX_ROOM_ZONE
+DX_WALL_AXIS
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbLine
  10
-11.48
+31.0
  20
+21.12
+ 30
 0.0
- 10
+ 11
+31.0
+ 21
+33.0
+ 31
 0.0
- 20
-0.0
- 10
-0.0
- 20
-9.62
- 10
-11.48
- 20
-9.62
 1001
 DIMENSIONX
 1000
-room_id=kitchen
+kind=wall
 1000
-name=KITCHEN
+id=W021
 1000
-role=kitchen
+thickness_ft=0.500000
 1000
-area_sqft=110.437600
+height_ft=10.000000
 1000
-plan_id=1BHK_06
+exterior=1
+1000
+side=right
+1000
+room_ids=bedroom_2
   0
-MTEXT
+LINE
   5
 AF
 330
@@ -6457,25 +6463,39 @@ AF
 100
 AcDbEntity
   8
-DX_ROOM_LABEL
+DX_WALL_AXIS
 100
-AcDbMText
+AcDbLine
  10
-5.74
+0.0
  20
-4.8100000000000005
+33.0
  30
 0.0
- 40
-0.62
- 41
-10.102400000000001
- 71
-5
-  1
-KITCHEN\P11'-06" x 9'-07"
+ 11
+6.82
+ 21
+33.0
+ 31
+0.0
+1001
+DIMENSIONX
+1000
+kind=wall
+1000
+id=W022
+1000
+thickness_ft=0.500000
+1000
+height_ft=10.000000
+1000
+exterior=1
+1000
+side=top
+1000
+room_ids=ensuite_toilet
   0
-LWPOLYLINE
+LINE
   5
 B0
 330
@@ -6483,43 +6503,39 @@ B0
 100
 AcDbEntity
   8
-DX_ROOM_ZONE
+DX_WALL_AXIS
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbLine
  10
-11.48
+6.82
  20
-9.62
- 10
+33.0
+ 30
 0.0
- 20
-9.62
- 10
+ 11
+17.36
+ 21
+33.0
+ 31
 0.0
- 20
-14.560000000000002
- 10
-11.48
- 20
-14.560000000000002
 1001
 DIMENSIONX
 1000
-room_id=passage
+kind=wall
 1000
-name=PASSAGE
+id=W023
 1000
-role=passage
+thickness_ft=0.500000
 1000
-area_sqft=56.711200
+height_ft=10.000000
 1000
-plan_id=1BHK_06
+exterior=1
+1000
+side=top
+1000
+room_ids=master_bedroom
   0
-MTEXT
+LINE
   5
 B1
 330
@@ -6527,23 +6543,37 @@ B1
 100
 AcDbEntity
   8
-DX_ROOM_LABEL
+DX_WALL_AXIS
 100
-AcDbMText
+AcDbLine
  10
-5.74
+17.36
  20
-12.09
+33.0
  30
 0.0
- 40
-0.3705000000000002
- 41
-10.102400000000001
- 71
-5
-  1
-PASSAGE\P11'-06" x 4'-11"
+ 11
+31.0
+ 21
+33.0
+ 31
+0.0
+1001
+DIMENSIONX
+1000
+kind=wall
+1000
+id=W024
+1000
+thickness_ft=0.500000
+1000
+height_ft=10.000000
+1000
+exterior=1
+1000
+side=top
+1000
+room_ids=bedroom_2
   0
 LWPOLYLINE
   5
@@ -6561,33 +6591,33 @@ AcDbPolyline
  70
 1
  10
-28.0
+31.0
  20
-14.560000000000002
+0.0
  10
-11.48
+12.400000000000002
  20
-14.560000000000002
+0.0
  10
-11.48
+12.400000000000002
  20
-26.0
+12.870000000000001
  10
-28.0
+31.0
  20
-26.0
+12.870000000000001
 1001
 DIMENSIONX
 1000
-room_id=master_bedroom
+room_id=living_dining
 1000
-name=MASTER BEDROOM
+name=LIVING / DINING
 1000
-role=bedroom
+role=living
 1000
-area_sqft=188.988800
+area_sqft=239.382000
 1000
-plan_id=1BHK_06
+plan_id=2BHK_06
   0
 MTEXT
   5
@@ -6601,19 +6631,19 @@ DX_ROOM_LABEL
 100
 AcDbMText
  10
-19.740000000000002
+21.700000000000003
  20
-20.280000000000005
+6.4350000000000005
  30
 0.0
  40
 0.62
  41
-14.5376
+16.368
  71
 5
   1
-MASTER BEDROOM\P16'-06" x 11'-05"
+LIVING / DINING\P18'-07" x 12'-10"
   0
 LWPOLYLINE
   5
@@ -6631,33 +6661,33 @@ AcDbPolyline
  70
 1
  10
-11.48
+12.400000000000002
  20
-14.560000000000002
+0.0
  10
-5.879999999999999
+0.0
  20
-14.560000000000002
+0.0
  10
-5.879999999999999
+0.0
  20
-26.0
+12.870000000000001
  10
-11.48
+12.400000000000002
  20
-26.0
+12.870000000000001
 1001
 DIMENSIONX
 1000
-room_id=bathroom
+room_id=kitchen
 1000
-name=BATH / WC
+name=KITCHEN
 1000
-role=bathroom
+role=kitchen
 1000
-area_sqft=64.064000
+area_sqft=159.588000
 1000
-plan_id=1BHK_06
+plan_id=2BHK_06
   0
 MTEXT
   5
@@ -6671,19 +6701,19 @@ DX_ROOM_LABEL
 100
 AcDbMText
  10
-8.68
+6.200000000000001
  20
-20.279999999999998
+6.4350000000000005
  30
 0.0
  40
-0.4200000000000001
+0.62
  41
-4.928000000000002
+10.912000000000003
  71
 5
   1
-BATH / WC\P5'-07" x 11'-05"
+KITCHEN\P12'-05" x 12'-10"
   0
 LWPOLYLINE
   5
@@ -6701,33 +6731,33 @@ AcDbPolyline
  70
 1
  10
-5.879999999999999
+31.0
  20
-14.560000000000002
+12.870000000000001
  10
-0.0
+24.18
  20
-14.560000000000002
+12.870000000000001
  10
-0.0
+24.18
  20
-26.0
+21.12
  10
-5.879999999999999
+31.0
  20
-26.0
+21.12
 1001
 DIMENSIONX
 1000
-room_id=utility
+room_id=foyer
 1000
-name=UTILITY / STORE
+name=ENTRY / FOYER
 1000
-role=utility
+role=foyer
 1000
-area_sqft=67.267200
+area_sqft=56.265000
 1000
-plan_id=1BHK_06
+plan_id=2BHK_06
   0
 MTEXT
   5
@@ -6741,23 +6771,373 @@ DX_ROOM_LABEL
 100
 AcDbMText
  10
-2.9399999999999995
+27.589999999999982
  20
-20.28
+16.994999999999997
  30
 0.0
  40
-0.4409999999999999
+0.5115
  41
-5.1743999999999994
+6.001600000000001
  71
 5
   1
-UTILITY / STORE\P5'-11" x 11'-05"
+ENTRY / FOYER\P6'-10" x 8'-03"
+  0
+LWPOLYLINE
+  5
+B8
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_ZONE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+24.18
+ 20
+12.870000000000001
+ 10
+6.82
+ 20
+12.870000000000001
+ 10
+6.82
+ 20
+21.12
+ 10
+24.18
+ 20
+21.12
+1001
+DIMENSIONX
+1000
+room_id=passage
+1000
+name=PASSAGE
+1000
+role=passage
+1000
+area_sqft=143.220000
+1000
+plan_id=2BHK_06
+  0
+MTEXT
+  5
+B9
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_LABEL
+100
+AcDbMText
+ 10
+15.5
+ 20
+16.995
+ 30
+0.0
+ 40
+0.61875
+ 41
+15.2768
+ 71
+5
+  1
+PASSAGE\P17'-04" x 8'-03"
+  0
+LWPOLYLINE
+  5
+BA
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_ZONE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+6.82
+ 20
+12.870000000000001
+ 10
+0.0
+ 20
+12.870000000000001
+ 10
+0.0
+ 20
+21.12
+ 10
+6.82
+ 20
+21.12
+1001
+DIMENSIONX
+1000
+room_id=common_toilet
+1000
+name=COMMON TOILET
+1000
+role=bathroom
+1000
+area_sqft=56.265000
+1000
+plan_id=2BHK_06
+  0
+MTEXT
+  5
+BB
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_LABEL
+100
+AcDbMText
+ 10
+3.4099999999999997
+ 20
+16.995
+ 30
+0.0
+ 40
+0.5115
+ 41
+6.001600000000001
+ 71
+5
+  1
+C. TOI.\P6'-10" x 8'-03"
+  0
+LWPOLYLINE
+  5
+BC
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_ZONE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+31.0
+ 20
+21.12
+ 10
+17.36
+ 20
+21.12
+ 10
+17.36
+ 20
+33.0
+ 10
+31.0
+ 20
+33.0
+1001
+DIMENSIONX
+1000
+room_id=bedroom_2
+1000
+name=BEDROOM 2
+1000
+role=bedroom
+1000
+area_sqft=162.043200
+1000
+plan_id=2BHK_06
+  0
+MTEXT
+  5
+BD
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_LABEL
+100
+AcDbMText
+ 10
+24.18
+ 20
+27.060000000000006
+ 30
+0.0
+ 40
+0.62
+ 41
+12.003200000000001
+ 71
+5
+  1
+BEDROOM 2\P13'-08" x 11'-11"
+  0
+LWPOLYLINE
+  5
+BE
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_ZONE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+17.36
+ 20
+21.12
+ 10
+6.82
+ 20
+21.12
+ 10
+6.82
+ 20
+33.0
+ 10
+17.36
+ 20
+33.0
+1001
+DIMENSIONX
+1000
+room_id=master_bedroom
+1000
+name=MASTER BEDROOM
+1000
+role=bedroom
+1000
+area_sqft=125.215200
+1000
+plan_id=2BHK_06
+  0
+MTEXT
+  5
+BF
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_LABEL
+100
+AcDbMText
+ 10
+12.089999999999998
+ 20
+27.059999999999995
+ 30
+0.0
+ 40
+0.62
+ 41
+9.2752
+ 71
+5
+  1
+MASTER BEDROOM\P10'-06" x 11'-11"
+  0
+LWPOLYLINE
+  5
+C0
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_ZONE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+6.82
+ 20
+21.12
+ 10
+0.0
+ 20
+21.12
+ 10
+0.0
+ 20
+33.0
+ 10
+6.82
+ 20
+33.0
+1001
+DIMENSIONX
+1000
+room_id=ensuite_toilet
+1000
+name=MASTER TOILET
+1000
+role=bathroom
+1000
+area_sqft=81.021600
+1000
+plan_id=2BHK_06
+  0
+MTEXT
+  5
+C1
+330
+17
+100
+AcDbEntity
+  8
+DX_ROOM_LABEL
+100
+AcDbMText
+ 10
+3.41
+ 20
+27.06000000000001
+ 30
+0.0
+ 40
+0.5115
+ 41
+6.001600000000001
+ 71
+5
+  1
+M. TOI.\P6'-10" x 11'-11"
   0
 POINT
   5
-B8
+C2
 330
 17
 100
@@ -6767,9 +7147,9 @@ DX_DOOR
 100
 AcDbPoint
  10
-11.48
+27.59
  20
-4.81
+12.87
  30
 0.0
 1001
@@ -6779,7 +7159,7 @@ kind=door
 1000
 id=D01
 1000
-wall_id=W004
+wall_id=W011
 1000
 width_ft=2.800000
 1000
@@ -6789,13 +7169,13 @@ sill_height_ft=0.000000
 1000
 role=internal
 1000
-orientation=VERTICAL
+orientation=HORIZONTAL
 1000
 swing_direction=interior
   0
 LINE
   5
-B9
+C3
 330
 17
 100
@@ -6805,21 +7185,21 @@ DX_DOOR_SYMBOL
 100
 AcDbLine
  10
-11.48
+26.19
  20
-3.4099999999999997
+12.87
  30
 0.0
  11
-8.68
+26.19
  21
-3.4099999999999997
+15.669999999999998
  31
 0.0
   0
 ARC
   5
-BA
+C4
 330
 17
 100
@@ -6829,9 +7209,9 @@ DX_DOOR_SYMBOL
 100
 AcDbCircle
  10
-11.48
+26.19
  20
-3.4099999999999997
+12.87
  30
 0.0
  40
@@ -6839,13 +7219,13 @@ AcDbCircle
 100
 AcDbArc
  50
-90.0
+0.0
  51
-180.0
+90.0
   0
 POINT
   5
-BB
+C5
 330
 17
 100
@@ -6855,9 +7235,9 @@ DX_DOOR
 100
 AcDbPoint
  10
-11.48
+18.29
  20
-12.09
+12.87
  30
 0.0
 1001
@@ -6866,6 +7246,94 @@ DIMENSIONX
 kind=door
 1000
 id=D02
+1000
+wall_id=W010
+1000
+width_ft=2.800000
+1000
+height_ft=7.000000
+1000
+sill_height_ft=0.000000
+1000
+role=internal
+1000
+orientation=HORIZONTAL
+1000
+swing_direction=interior
+  0
+LINE
+  5
+C6
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR_SYMBOL
+100
+AcDbLine
+ 10
+16.89
+ 20
+12.87
+ 30
+0.0
+ 11
+16.89
+ 21
+15.669999999999998
+ 31
+0.0
+  0
+ARC
+  5
+C7
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR_SYMBOL
+100
+AcDbCircle
+ 10
+16.89
+ 20
+12.87
+ 30
+0.0
+ 40
+2.8
+100
+AcDbArc
+ 50
+0.0
+ 51
+90.0
+  0
+POINT
+  5
+C8
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR
+100
+AcDbPoint
+ 10
+9.61
+ 20
+12.87
+ 30
+0.0
+1001
+DIMENSIONX
+1000
+kind=door
+1000
+id=D03
 1000
 wall_id=W008
 1000
@@ -6877,13 +7345,13 @@ sill_height_ft=0.000000
 1000
 role=internal
 1000
-orientation=VERTICAL
+orientation=HORIZONTAL
 1000
 swing_direction=interior
   0
 LINE
   5
-BC
+C9
 330
 17
 100
@@ -6893,21 +7361,21 @@ DX_DOOR_SYMBOL
 100
 AcDbLine
  10
-11.48
+8.209999999999999
  20
-10.69
+12.87
  30
 0.0
  11
-8.68
+8.209999999999999
  21
-10.69
+15.669999999999998
  31
 0.0
   0
 ARC
   5
-BD
+CA
 330
 17
 100
@@ -6917,9 +7385,9 @@ DX_DOOR_SYMBOL
 100
 AcDbCircle
  10
-11.48
+8.209999999999999
  20
-10.69
+12.87
  30
 0.0
  40
@@ -6927,13 +7395,13 @@ AcDbCircle
 100
 AcDbArc
  50
-90.0
+0.0
  51
-180.0
+90.0
   0
 POINT
   5
-BE
+CB
 330
 17
 100
@@ -6943,9 +7411,9 @@ DX_DOOR
 100
 AcDbPoint
  10
-19.740000000000002
+6.82
  20
-14.56
+16.995
  30
 0.0
 1001
@@ -6953,9 +7421,97 @@ DIMENSIONX
 1000
 kind=door
 1000
-id=D03
+id=D04
 1000
-wall_id=W013
+wall_id=W009
+1000
+width_ft=2.400000
+1000
+height_ft=7.000000
+1000
+sill_height_ft=0.000000
+1000
+role=internal
+1000
+orientation=VERTICAL
+1000
+swing_direction=interior
+  0
+LINE
+  5
+CC
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR_SYMBOL
+100
+AcDbLine
+ 10
+6.82
+ 20
+15.795000000000002
+ 30
+0.0
+ 11
+4.42
+ 21
+15.795000000000002
+ 31
+0.0
+  0
+ARC
+  5
+CD
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR_SYMBOL
+100
+AcDbCircle
+ 10
+6.82
+ 20
+15.795000000000002
+ 30
+0.0
+ 40
+2.4
+100
+AcDbArc
+ 50
+90.0
+ 51
+180.0
+  0
+POINT
+  5
+CE
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR
+100
+AcDbPoint
+ 10
+20.77
+ 20
+21.12
+ 30
+0.0
+1001
+DIMENSIONX
+1000
+kind=door
+1000
+id=D05
+1000
+wall_id=W018
 1000
 width_ft=2.800000
 1000
@@ -6971,7 +7527,7 @@ swing_direction=interior
   0
 LINE
   5
-BF
+CF
 330
 17
 100
@@ -6981,21 +7537,21 @@ DX_DOOR_SYMBOL
 100
 AcDbLine
  10
-18.340000000000003
+19.37
  20
-14.56
+21.12
  30
 0.0
  11
-18.340000000000003
+19.37
  21
-17.36
+23.92
  31
 0.0
   0
 ARC
   5
-C0
+D0
 330
 17
 100
@@ -7005,9 +7561,9 @@ DX_DOOR_SYMBOL
 100
 AcDbCircle
  10
-18.340000000000003
+19.37
  20
-14.56
+21.12
  30
 0.0
  40
@@ -7021,7 +7577,7 @@ AcDbArc
   0
 POINT
   5
-C1
+D1
 330
 17
 100
@@ -7031,185 +7587,9 @@ DX_DOOR
 100
 AcDbPoint
  10
-5.74
+12.09
  20
-9.62
- 30
-0.0
-1001
-DIMENSIONX
-1000
-kind=door
-1000
-id=D04
-1000
-wall_id=W006
-1000
-width_ft=2.600000
-1000
-height_ft=7.000000
-1000
-sill_height_ft=0.000000
-1000
-role=internal
-1000
-orientation=HORIZONTAL
-1000
-swing_direction=interior
-  0
-LINE
-  5
-C2
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbLine
- 10
-4.44
- 20
-9.62
- 30
-0.0
- 11
-4.44
- 21
-12.219999999999999
- 31
-0.0
-  0
-ARC
-  5
-C3
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbCircle
- 10
-4.44
- 20
-9.62
- 30
-0.0
- 40
-2.6
-100
-AcDbArc
- 50
-0.0
- 51
-90.0
-  0
-POINT
-  5
-C4
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR
-100
-AcDbPoint
- 10
-8.68
- 20
-14.56
- 30
-0.0
-1001
-DIMENSIONX
-1000
-kind=door
-1000
-id=D05
-1000
-wall_id=W011
-1000
-width_ft=2.400000
-1000
-height_ft=7.000000
-1000
-sill_height_ft=0.000000
-1000
-role=internal
-1000
-orientation=HORIZONTAL
-1000
-swing_direction=interior
-  0
-LINE
-  5
-C5
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbLine
- 10
-7.4799999999999995
- 20
-14.56
- 30
-0.0
- 11
-7.4799999999999995
- 21
-16.96
- 31
-0.0
-  0
-ARC
-  5
-C6
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbCircle
- 10
-7.4799999999999995
- 20
-14.56
- 30
-0.0
- 40
-2.4
-100
-AcDbArc
- 50
-0.0
- 51
-90.0
-  0
-POINT
-  5
-C7
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR
-100
-AcDbPoint
- 10
-2.94
- 20
-14.56
+21.12
  30
 0.0
 1001
@@ -7219,9 +7599,9 @@ kind=door
 1000
 id=D06
 1000
-wall_id=W009
+wall_id=W016
 1000
-width_ft=2.400000
+width_ft=2.800000
 1000
 height_ft=7.000000
 1000
@@ -7235,294 +7615,6 @@ swing_direction=interior
   0
 LINE
   5
-C8
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbLine
- 10
-1.74
- 20
-14.56
- 30
-0.0
- 11
-1.74
- 21
-16.96
- 31
-0.0
-  0
-ARC
-  5
-C9
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbCircle
- 10
-1.74
- 20
-14.56
- 30
-0.0
- 40
-2.4
-100
-AcDbArc
- 50
-0.0
- 51
-90.0
-  0
-POINT
-  5
-CA
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR
-100
-AcDbPoint
- 10
-19.740000000000002
- 20
-0.0
- 30
-0.0
-1001
-DIMENSIONX
-1000
-kind=door
-1000
-id=D_BAL_01
-1000
-wall_id=W003
-1000
-width_ft=4.000000
-1000
-height_ft=7.000000
-1000
-sill_height_ft=0.000000
-1000
-role=balcony_access
-1000
-orientation=HORIZONTAL
-1000
-swing_direction=interior
-  0
-LINE
-  5
-CB
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbLine
- 10
-17.740000000000002
- 20
-0.0
- 30
-0.0
- 11
-17.740000000000002
- 21
-4.0
- 31
-0.0
-  0
-ARC
-  5
-CC
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbCircle
- 10
-17.740000000000002
- 20
-0.0
- 30
-0.0
- 40
-4.0
-100
-AcDbArc
- 50
-0.0
- 51
-90.0
-  0
-POINT
-  5
-CD
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR
-100
-AcDbPoint
- 10
-28.0
- 20
-4.8048
- 30
-0.0
-1001
-DIMENSIONX
-1000
-kind=door
-1000
-id=D_ENTRY
-1000
-wall_id=W005
-1000
-width_ft=3.000000
-1000
-height_ft=7.000000
-1000
-sill_height_ft=0.000000
-1000
-role=main_entrance
-1000
-orientation=VERTICAL
-1000
-swing_direction=interior
-  0
-LINE
-  5
-CE
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbLine
- 10
-28.0
- 20
-3.3048
- 30
-0.0
- 11
-25.0
- 21
-3.3048
- 31
-0.0
-  0
-ARC
-  5
-CF
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbCircle
- 10
-28.0
- 20
-3.3048
- 30
-0.0
- 40
-3.0
-100
-AcDbArc
- 50
-90.0
- 51
-180.0
-  0
-POINT
-  5
-D0
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR
-100
-AcDbPoint
- 10
-5.74
- 20
-0.0
- 30
-0.0
-1001
-DIMENSIONX
-1000
-kind=door
-1000
-id=D_BAL_02
-1000
-wall_id=W001
-1000
-width_ft=4.000000
-1000
-height_ft=7.000000
-1000
-sill_height_ft=0.000000
-1000
-role=balcony_access
-1000
-orientation=HORIZONTAL
-1000
-swing_direction=interior
-  0
-LINE
-  5
-D1
-330
-17
-100
-AcDbEntity
-  8
-DX_DOOR_SYMBOL
-100
-AcDbLine
- 10
-3.74
- 20
-0.0
- 30
-0.0
- 11
-3.74
- 21
-4.0
- 31
-0.0
-  0
-ARC
-  5
 D2
 330
 17
@@ -7531,15 +7623,39 @@ AcDbEntity
   8
 DX_DOOR_SYMBOL
 100
+AcDbLine
+ 10
+10.69
+ 20
+21.12
+ 30
+0.0
+ 11
+10.69
+ 21
+23.92
+ 31
+0.0
+  0
+ARC
+  5
+D3
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR_SYMBOL
+100
 AcDbCircle
  10
-3.74
+10.69
  20
-0.0
+21.12
  30
 0.0
  40
-4.0
+2.8
 100
 AcDbArc
  50
@@ -7549,63 +7665,41 @@ AcDbArc
   0
 POINT
   5
-D3
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW
-100
-AcDbPoint
- 10
-28.0
- 20
-9.9008
- 30
-0.0
-1001
-DIMENSIONX
-1000
-kind=window
-1000
-id=WN01
-1000
-wall_id=W005
-1000
-width_ft=5.000000
-1000
-height_ft=4.000000
-1000
-sill_height_ft=3.000000
-1000
-role=living_window
-1000
-orientation=VERTICAL
-  0
-LINE
-  5
 D4
 330
 17
 100
 AcDbEntity
   8
-DX_WINDOW_SYMBOL
+DX_DOOR
 100
-AcDbLine
+AcDbPoint
  10
-28.09
+6.82
  20
-7.4008
+27.060000000000002
  30
 0.0
- 11
-28.09
- 21
-12.4008
- 31
-0.0
+1001
+DIMENSIONX
+1000
+kind=door
+1000
+id=D07
+1000
+wall_id=W017
+1000
+width_ft=2.400000
+1000
+height_ft=7.000000
+1000
+sill_height_ft=0.000000
+1000
+role=internal
+1000
+orientation=VERTICAL
+1000
+swing_direction=interior
   0
 LINE
   5
@@ -7615,23 +7709,23 @@ D5
 100
 AcDbEntity
   8
-DX_WINDOW_SYMBOL
+DX_DOOR_SYMBOL
 100
 AcDbLine
  10
-27.91
+6.82
  20
-7.4008
+25.860000000000003
  30
 0.0
  11
-27.91
+4.42
  21
-12.4008
+25.860000000000003
  31
 0.0
   0
-LINE
+ARC
   5
 D6
 330
@@ -7639,25 +7733,239 @@ D6
 100
 AcDbEntity
   8
-DX_WINDOW_SYMBOL
+DX_DOOR_SYMBOL
 100
-AcDbLine
+AcDbCircle
  10
-28.2
+6.82
  20
-7.4008
+25.860000000000003
  30
 0.0
- 11
-27.8
- 21
-7.4008
- 31
+ 40
+2.4
+100
+AcDbArc
+ 50
+90.0
+ 51
+180.0
+  0
+POINT
+  5
+D7
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR
+100
+AcDbPoint
+ 10
+31.0
+ 20
+6.435
+ 30
 0.0
+1001
+DIMENSIONX
+1000
+kind=door
+1000
+id=D_BAL_01
+1000
+wall_id=W005
+1000
+width_ft=4.000000
+1000
+height_ft=7.000000
+1000
+sill_height_ft=0.000000
+1000
+role=balcony_access
+1000
+orientation=VERTICAL
+1000
+swing_direction=interior
   0
 LINE
   5
-D7
+D8
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR_SYMBOL
+100
+AcDbLine
+ 10
+31.0
+ 20
+4.435
+ 30
+0.0
+ 11
+27.0
+ 21
+4.435
+ 31
+0.0
+  0
+ARC
+  5
+D9
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR_SYMBOL
+100
+AcDbCircle
+ 10
+31.0
+ 20
+4.435
+ 30
+0.0
+ 40
+4.0
+100
+AcDbArc
+ 50
+90.0
+ 51
+180.0
+  0
+POINT
+  5
+DA
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR
+100
+AcDbPoint
+ 10
+18.538
+ 20
+0.0
+ 30
+0.0
+1001
+DIMENSIONX
+1000
+kind=door
+1000
+id=D_ENTRY
+1000
+wall_id=W003
+1000
+width_ft=3.000000
+1000
+height_ft=7.000000
+1000
+sill_height_ft=0.000000
+1000
+role=main_entrance
+1000
+orientation=HORIZONTAL
+1000
+swing_direction=interior
+  0
+LINE
+  5
+DB
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR_SYMBOL
+100
+AcDbLine
+ 10
+17.038
+ 20
+0.0
+ 30
+0.0
+ 11
+17.038
+ 21
+3.0
+ 31
+0.0
+  0
+ARC
+  5
+DC
+330
+17
+100
+AcDbEntity
+  8
+DX_DOOR_SYMBOL
+100
+AcDbCircle
+ 10
+17.038
+ 20
+0.0
+ 30
+0.0
+ 40
+3.0
+100
+AcDbArc
+ 50
+0.0
+ 51
+90.0
+  0
+POINT
+  5
+DD
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW
+100
+AcDbPoint
+ 10
+25.048000000000002
+ 20
+0.0
+ 30
+0.0
+1001
+DIMENSIONX
+1000
+kind=window
+1000
+id=WN01
+1000
+wall_id=W003
+1000
+width_ft=5.000000
+1000
+height_ft=4.000000
+1000
+sill_height_ft=3.000000
+1000
+role=living_window
+1000
+orientation=HORIZONTAL
+  0
+LINE
+  5
+DE
 330
 17
 100
@@ -7667,21 +7975,93 @@ DX_WINDOW_SYMBOL
 100
 AcDbLine
  10
-28.2
+22.548000000000002
  20
-12.4008
+-0.09
  30
 0.0
  11
-27.8
+27.548000000000002
  21
-12.4008
+-0.09
+ 31
+0.0
+  0
+LINE
+  5
+DF
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+22.548000000000002
+ 20
+0.09
+ 30
+0.0
+ 11
+27.548000000000002
+ 21
+0.09
+ 31
+0.0
+  0
+LINE
+  5
+E0
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+22.548000000000002
+ 20
+-0.2
+ 30
+0.0
+ 11
+22.548000000000002
+ 21
+0.2
+ 31
+0.0
+  0
+LINE
+  5
+E1
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+27.548000000000002
+ 20
+-0.2
+ 30
+0.0
+ 11
+27.548000000000002
+ 21
+0.2
  31
 0.0
   0
 POINT
   5
-D8
+E2
 330
 17
 100
@@ -7693,7 +8073,7 @@ AcDbPoint
  10
 0.0
  20
-6.5416
+8.7516
  30
 0.0
 1001
@@ -7717,270 +8097,6 @@ orientation=VERTICAL
   0
 LINE
   5
-D9
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW_SYMBOL
-100
-AcDbLine
- 10
-0.09
- 20
-4.7916
- 30
-0.0
- 11
-0.09
- 21
-8.291599999999999
- 31
-0.0
-  0
-LINE
-  5
-DA
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW_SYMBOL
-100
-AcDbLine
- 10
--0.09
- 20
-4.7916
- 30
-0.0
- 11
--0.09
- 21
-8.291599999999999
- 31
-0.0
-  0
-LINE
-  5
-DB
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW_SYMBOL
-100
-AcDbLine
- 10
-0.2
- 20
-4.7916
- 30
-0.0
- 11
--0.2
- 21
-4.7916
- 31
-0.0
-  0
-LINE
-  5
-DC
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW_SYMBOL
-100
-AcDbLine
- 10
-0.2
- 20
-8.291599999999999
- 30
-0.0
- 11
--0.2
- 21
-8.291599999999999
- 31
-0.0
-  0
-POINT
-  5
-DD
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW
-100
-AcDbPoint
- 10
-22.7136
- 20
-26.0
- 30
-0.0
-1001
-DIMENSIONX
-1000
-kind=window
-1000
-id=WN03
-1000
-wall_id=W018
-1000
-width_ft=4.500000
-1000
-height_ft=4.000000
-1000
-sill_height_ft=3.000000
-1000
-role=bedroom_window
-1000
-orientation=HORIZONTAL
-  0
-LINE
-  5
-DE
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW_SYMBOL
-100
-AcDbLine
- 10
-20.4636
- 20
-25.91
- 30
-0.0
- 11
-24.9636
- 21
-25.91
- 31
-0.0
-  0
-LINE
-  5
-DF
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW_SYMBOL
-100
-AcDbLine
- 10
-20.4636
- 20
-26.09
- 30
-0.0
- 11
-24.9636
- 21
-26.09
- 31
-0.0
-  0
-LINE
-  5
-E0
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW_SYMBOL
-100
-AcDbLine
- 10
-20.4636
- 20
-25.8
- 30
-0.0
- 11
-20.4636
- 21
-26.2
- 31
-0.0
-  0
-LINE
-  5
-E1
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW_SYMBOL
-100
-AcDbLine
- 10
-24.9636
- 20
-25.8
- 30
-0.0
- 11
-24.9636
- 21
-26.2
- 31
-0.0
-  0
-POINT
-  5
-E2
-330
-17
-100
-AcDbEntity
-  8
-DX_WINDOW
-100
-AcDbPoint
- 10
-9.688
- 20
-26.0
- 30
-0.0
-1001
-DIMENSIONX
-1000
-kind=window
-1000
-id=WN04
-1000
-wall_id=W017
-1000
-width_ft=2.000000
-1000
-height_ft=1.500000
-1000
-sill_height_ft=5.800000
-1000
-role=vent
-1000
-orientation=HORIZONTAL
-  0
-LINE
-  5
 E3
 330
 17
@@ -7991,15 +8107,15 @@ DX_WINDOW_SYMBOL
 100
 AcDbLine
  10
-8.688
+0.09
  20
-25.91
+7.0016
  30
 0.0
  11
-10.688
+0.09
  21
-25.91
+10.5016
  31
 0.0
   0
@@ -8015,15 +8131,15 @@ DX_WINDOW_SYMBOL
 100
 AcDbLine
  10
-8.688
+-0.09
  20
-26.09
+7.0016
  30
 0.0
  11
-10.688
+-0.09
  21
-26.09
+10.5016
  31
 0.0
   0
@@ -8039,15 +8155,15 @@ DX_WINDOW_SYMBOL
 100
 AcDbLine
  10
-8.688
+0.2
  20
-25.8
+7.0016
  30
 0.0
  11
-8.688
+-0.2
  21
-26.2
+7.0016
  31
 0.0
   0
@@ -8063,21 +8179,417 @@ DX_WINDOW_SYMBOL
 100
 AcDbLine
  10
-10.688
+0.2
  20
-25.8
+10.5016
  30
 0.0
  11
-10.688
+-0.2
  21
-26.2
+10.5016
+ 31
+0.0
+  0
+POINT
+  5
+E7
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW
+100
+AcDbPoint
+ 10
+26.6352
+ 20
+33.0
+ 30
+0.0
+1001
+DIMENSIONX
+1000
+kind=window
+1000
+id=WN03
+1000
+wall_id=W024
+1000
+width_ft=4.500000
+1000
+height_ft=4.000000
+1000
+sill_height_ft=3.000000
+1000
+role=bedroom_window
+1000
+orientation=HORIZONTAL
+  0
+LINE
+  5
+E8
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+24.3852
+ 20
+32.91
+ 30
+0.0
+ 11
+28.8852
+ 21
+32.91
+ 31
+0.0
+  0
+LINE
+  5
+E9
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+24.3852
+ 20
+33.09
+ 30
+0.0
+ 11
+28.8852
+ 21
+33.09
+ 31
+0.0
+  0
+LINE
+  5
+EA
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+24.3852
+ 20
+32.8
+ 30
+0.0
+ 11
+24.3852
+ 21
+33.2
+ 31
+0.0
+  0
+LINE
+  5
+EB
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+28.8852
+ 20
+32.8
+ 30
+0.0
+ 11
+28.8852
+ 21
+33.2
+ 31
+0.0
+  0
+POINT
+  5
+EC
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW
+100
+AcDbPoint
+ 10
+13.987200000000001
+ 20
+33.0
+ 30
+0.0
+1001
+DIMENSIONX
+1000
+kind=window
+1000
+id=WN04
+1000
+wall_id=W023
+1000
+width_ft=4.500000
+1000
+height_ft=4.000000
+1000
+sill_height_ft=3.000000
+1000
+role=bedroom_window
+1000
+orientation=HORIZONTAL
+  0
+LINE
+  5
+ED
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+11.737200000000001
+ 20
+32.91
+ 30
+0.0
+ 11
+16.2372
+ 21
+32.91
+ 31
+0.0
+  0
+LINE
+  5
+EE
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+11.737200000000001
+ 20
+33.09
+ 30
+0.0
+ 11
+16.2372
+ 21
+33.09
+ 31
+0.0
+  0
+LINE
+  5
+EF
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+11.737200000000001
+ 20
+32.8
+ 30
+0.0
+ 11
+11.737200000000001
+ 21
+33.2
+ 31
+0.0
+  0
+LINE
+  5
+F0
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+16.2372
+ 20
+32.8
+ 30
+0.0
+ 11
+16.2372
+ 21
+33.2
+ 31
+0.0
+  0
+POINT
+  5
+F1
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW
+100
+AcDbPoint
+ 10
+0.0
+ 20
+18.48
+ 30
+0.0
+1001
+DIMENSIONX
+1000
+kind=window
+1000
+id=WN05
+1000
+wall_id=W007
+1000
+width_ft=2.000000
+1000
+height_ft=1.500000
+1000
+sill_height_ft=5.800000
+1000
+role=vent
+1000
+orientation=VERTICAL
+  0
+LINE
+  5
+F2
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+0.09
+ 20
+17.48
+ 30
+0.0
+ 11
+0.09
+ 21
+19.48
+ 31
+0.0
+  0
+LINE
+  5
+F3
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+-0.09
+ 20
+17.48
+ 30
+0.0
+ 11
+-0.09
+ 21
+19.48
+ 31
+0.0
+  0
+LINE
+  5
+F4
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+0.2
+ 20
+17.48
+ 30
+0.0
+ 11
+-0.2
+ 21
+17.48
+ 31
+0.0
+  0
+LINE
+  5
+F5
+330
+17
+100
+AcDbEntity
+  8
+DX_WINDOW_SYMBOL
+100
+AcDbLine
+ 10
+0.2
+ 20
+19.48
+ 30
+0.0
+ 11
+-0.2
+ 21
+19.48
  31
 0.0
   0
 LWPOLYLINE
   5
-E7
+F6
 330
 17
 100
@@ -8091,21 +8603,21 @@ AcDbPolyline
  70
 1
  10
-16.740000000000002
+31.0
  20
-0.0
+3.1849999999999996
  10
-22.740000000000002
+31.0
  20
-0.0
+9.684999999999999
  10
-22.740000000000002
+35.0
  20
--4.0
+9.684999999999999
  10
-16.740000000000002
+35.0
  20
--4.0
+3.1849999999999996
 1001
 DIMENSIONX
 1000
@@ -8117,17 +8629,17 @@ role=balcony
 1000
 depth_ft=4.000000
 1000
-width_ft=6.000000
+width_ft=6.500000
 1000
-attachment_wall_id=W003
+attachment_wall_id=W005
 1000
-attached_side=bottom
+attached_side=right
 1000
-plan_id=1BHK_06
+plan_id=2BHK_06
   0
 LINE
   5
-E8
+F7
 330
 17
 100
@@ -8137,15 +8649,15 @@ DX_RAILING
 100
 AcDbLine
  10
-22.740000000000002
+31.0
  20
-0.0
+9.684999999999999
  30
 0.0
  11
-22.740000000000002
+35.0
  21
--4.0
+9.684999999999999
  31
 0.0
 1001
@@ -8157,7 +8669,7 @@ rail_type=perimeter
   0
 LINE
   5
-E9
+F8
 330
 17
 100
@@ -8167,15 +8679,15 @@ DX_RAILING
 100
 AcDbLine
  10
-22.740000000000002
+35.0
  20
--4.0
+9.684999999999999
  30
 0.0
  11
-16.740000000000002
+35.0
  21
--4.0
+3.1849999999999996
  31
 0.0
 1001
@@ -8187,7 +8699,7 @@ rail_type=perimeter
   0
 LINE
   5
-EA
+F9
 330
 17
 100
@@ -8197,15 +8709,15 @@ DX_RAILING
 100
 AcDbLine
  10
-16.740000000000002
+35.0
  20
--4.0
+3.1849999999999996
  30
 0.0
  11
-16.740000000000002
+31.0
  21
-0.0
+3.1849999999999996
  31
 0.0
 1001
@@ -8217,7 +8729,7 @@ rail_type=perimeter
   0
 TEXT
   5
-EB
+FA
 330
 17
 100
@@ -8227,9 +8739,9 @@ DX_ROOM_LABEL
 100
 AcDbText
  10
-19.740000000000002
+32.999999999999986
  20
--2.0
+6.434999999999999
  30
 0.0
  40
@@ -8239,549 +8751,15 @@ BALCONY
  72
 1
  11
-19.740000000000002
+32.999999999999986
  21
--2.0
+6.434999999999999
  31
 0.0
 100
 AcDbText
  73
 2
-  0
-LWPOLYLINE
-  5
-EC
-330
-17
-100
-AcDbEntity
-  8
-DX_BALCONY
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-3.49
- 20
-0.0
- 10
-7.99
- 20
-0.0
- 10
-7.99
- 20
--3.5
- 10
-3.49
- 20
--3.5
-1001
-DIMENSIONX
-1000
-balcony_id=BAL_DRY
-1000
-name=DRY BALCONY
-1000
-role=dry_balcony
-1000
-depth_ft=3.500000
-1000
-width_ft=4.500000
-1000
-attachment_wall_id=W001
-1000
-attached_side=bottom
-1000
-plan_id=1BHK_06
-  0
-LINE
-  5
-ED
-330
-17
-100
-AcDbEntity
-  8
-DX_RAILING
-100
-AcDbLine
- 10
-7.99
- 20
-0.0
- 30
-0.0
- 11
-7.99
- 21
--3.5
- 31
-0.0
-1001
-DIMENSIONX
-1000
-balcony_id=BAL_DRY
-1000
-rail_type=perimeter
-  0
-LINE
-  5
-EE
-330
-17
-100
-AcDbEntity
-  8
-DX_RAILING
-100
-AcDbLine
- 10
-7.99
- 20
--3.5
- 30
-0.0
- 11
-3.49
- 21
--3.5
- 31
-0.0
-1001
-DIMENSIONX
-1000
-balcony_id=BAL_DRY
-1000
-rail_type=perimeter
-  0
-LINE
-  5
-EF
-330
-17
-100
-AcDbEntity
-  8
-DX_RAILING
-100
-AcDbLine
- 10
-3.49
- 20
--3.5
- 30
-0.0
- 11
-3.49
- 21
-0.0
- 31
-0.0
-1001
-DIMENSIONX
-1000
-balcony_id=BAL_DRY
-1000
-rail_type=perimeter
-  0
-TEXT
-  5
-F0
-330
-17
-100
-AcDbEntity
-  8
-DX_ROOM_LABEL
-100
-AcDbText
- 10
-5.739999999999998
- 20
--1.7499999999999998
- 30
-0.0
- 40
-0.55
-  1
-DRY BALCONY
- 72
-1
- 11
-5.739999999999998
- 21
--1.7499999999999998
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-LWPOLYLINE
-  5
-F1
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-0.0
- 20
-0.25
- 10
-3.74
- 20
-0.25
- 10
-3.74
- 20
--0.25
- 10
-0.0
- 20
--0.25
-1001
-DIMENSIONX
-1000
-wall_id=W001
-  0
-LWPOLYLINE
-  5
-F2
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-7.74
- 20
-0.25
- 10
-11.48
- 20
-0.25
- 10
-11.48
- 20
--0.25
- 10
-7.74
- 20
--0.25
-1001
-DIMENSIONX
-1000
-wall_id=W001
-  0
-LWPOLYLINE
-  5
-F3
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
--0.25
- 20
-0.0
- 10
--0.25
- 20
-4.7916
- 10
-0.25
- 20
-4.7916
- 10
-0.25
- 20
-0.0
-1001
-DIMENSIONX
-1000
-wall_id=W002
-  0
-LWPOLYLINE
-  5
-F4
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
--0.25
- 20
-8.291599999999999
- 10
--0.25
- 20
-9.62
- 10
-0.25
- 20
-9.62
- 10
-0.25
- 20
-8.291599999999999
-1001
-DIMENSIONX
-1000
-wall_id=W002
-  0
-LWPOLYLINE
-  5
-F5
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-11.48
- 20
-0.25
- 10
-17.740000000000002
- 20
-0.25
- 10
-17.740000000000002
- 20
--0.25
- 10
-11.48
- 20
--0.25
-1001
-DIMENSIONX
-1000
-wall_id=W003
-  0
-LWPOLYLINE
-  5
-F6
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-21.740000000000002
- 20
-0.25
- 10
-28.0
- 20
-0.25
- 10
-28.0
- 20
--0.25
- 10
-21.740000000000002
- 20
--0.25
-1001
-DIMENSIONX
-1000
-wall_id=W003
-  0
-LWPOLYLINE
-  5
-F7
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-11.23
- 20
-0.0
- 10
-11.23
- 20
-3.4099999999999997
- 10
-11.73
- 20
-3.4099999999999997
- 10
-11.73
- 20
-0.0
-1001
-DIMENSIONX
-1000
-wall_id=W004
-  0
-LWPOLYLINE
-  5
-F8
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-11.23
- 20
-6.209999999999999
- 10
-11.23
- 20
-9.62
- 10
-11.73
- 20
-9.62
- 10
-11.73
- 20
-6.209999999999999
-1001
-DIMENSIONX
-1000
-wall_id=W004
-  0
-LWPOLYLINE
-  5
-F9
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-27.75
- 20
-0.0
- 10
-27.75
- 20
-3.3048
- 10
-28.25
- 20
-3.3048
- 10
-28.25
- 20
-0.0
-1001
-DIMENSIONX
-1000
-wall_id=W005
-  0
-LWPOLYLINE
-  5
-FA
-330
-17
-100
-AcDbEntity
-  8
-DX_WALL_FACE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-27.75
- 20
-6.3048
- 10
-27.75
- 20
-7.4008
- 10
-28.25
- 20
-7.4008
- 10
-28.25
- 20
-6.3048
-1001
-DIMENSIONX
-1000
-wall_id=W005
   0
 LWPOLYLINE
   5
@@ -8799,25 +8777,25 @@ AcDbPolyline
  70
 1
  10
-27.75
+0.0
  20
-12.4008
+0.25
  10
-27.75
+12.4
  20
-14.56
+0.25
  10
-28.25
+12.4
  20
-14.56
+-0.25
  10
-28.25
+0.0
  20
-12.4008
+-0.25
 1001
 DIMENSIONX
 1000
-wall_id=W005
+wall_id=W001
   0
 LWPOLYLINE
   5
@@ -8835,25 +8813,25 @@ AcDbPolyline
  70
 1
  10
+-0.25
+ 20
 0.0
- 20
-9.87
  10
-4.44
+-0.25
  20
-9.87
+7.0016
  10
-4.44
+0.25
  20
-9.37
+7.0016
  10
+0.25
+ 20
 0.0
- 20
-9.37
 1001
 DIMENSIONX
 1000
-wall_id=W006
+wall_id=W002
   0
 LWPOLYLINE
   5
@@ -8871,25 +8849,25 @@ AcDbPolyline
  70
 1
  10
-7.04
+-0.25
  20
-9.87
+10.5016
  10
-11.48
+-0.25
  20
-9.87
+12.87
  10
-11.48
+0.25
  20
-9.37
+12.87
  10
-7.04
+0.25
  20
-9.37
+10.5016
 1001
 DIMENSIONX
 1000
-wall_id=W006
+wall_id=W002
   0
 LWPOLYLINE
   5
@@ -8907,25 +8885,25 @@ AcDbPolyline
  70
 1
  10
--0.25
+12.4
  20
-9.62
- 10
--0.25
- 20
-14.56
- 10
 0.25
- 20
-14.56
  10
-0.25
+17.038
  20
-9.62
+0.25
+ 10
+17.038
+ 20
+-0.25
+ 10
+12.4
+ 20
+-0.25
 1001
 DIMENSIONX
 1000
-wall_id=W007
+wall_id=W003
   0
 LWPOLYLINE
   5
@@ -8943,25 +8921,25 @@ AcDbPolyline
  70
 1
  10
-11.23
+20.038
  20
-9.62
+0.25
  10
-11.23
+22.548000000000002
  20
-10.69
+0.25
  10
-11.73
+22.548000000000002
  20
-10.69
+-0.25
  10
-11.73
+20.038
  20
-9.62
+-0.25
 1001
 DIMENSIONX
 1000
-wall_id=W008
+wall_id=W003
   0
 LWPOLYLINE
   5
@@ -8979,25 +8957,25 @@ AcDbPolyline
  70
 1
  10
-11.23
+27.548000000000002
  20
-13.49
+0.25
  10
-11.23
+31.0
  20
-14.56
+0.25
  10
-11.73
+31.0
  20
-14.56
+-0.25
  10
-11.73
+27.548000000000002
  20
-13.49
+-0.25
 1001
 DIMENSIONX
 1000
-wall_id=W008
+wall_id=W003
   0
 LWPOLYLINE
   5
@@ -9015,25 +8993,25 @@ AcDbPolyline
  70
 1
  10
+12.15
+ 20
 0.0
- 20
-14.81
  10
-1.74
+12.15
  20
-14.81
+12.87
  10
-1.74
+12.65
  20
-14.31
+12.87
  10
+12.65
+ 20
 0.0
- 20
-14.31
 1001
 DIMENSIONX
 1000
-wall_id=W009
+wall_id=W004
   0
 LWPOLYLINE
   5
@@ -9051,25 +9029,25 @@ AcDbPolyline
  70
 1
  10
-4.14
+30.75
  20
-14.81
+0.0
  10
-5.88
+30.75
  20
-14.81
+4.435
  10
-5.88
+31.25
  20
-14.31
+4.435
  10
-4.14
+31.25
  20
-14.31
+0.0
 1001
 DIMENSIONX
 1000
-wall_id=W009
+wall_id=W005
   0
 LWPOLYLINE
   5
@@ -9087,25 +9065,25 @@ AcDbPolyline
  70
 1
  10
--0.25
+30.75
  20
-14.56
+8.434999999999999
  10
--0.25
+30.75
  20
-26.0
+12.87
  10
-0.25
+31.25
  20
-26.0
+12.87
  10
-0.25
+31.25
  20
-14.56
+8.434999999999999
 1001
 DIMENSIONX
 1000
-wall_id=W010
+wall_id=W005
   0
 LWPOLYLINE
   5
@@ -9123,25 +9101,25 @@ AcDbPolyline
  70
 1
  10
-5.88
+0.0
  20
-14.81
+13.12
  10
-7.48
+6.82
  20
-14.81
+13.12
  10
-7.48
+6.82
  20
-14.31
+12.62
  10
-5.88
+0.0
  20
-14.31
+12.62
 1001
 DIMENSIONX
 1000
-wall_id=W011
+wall_id=W006
   0
 LWPOLYLINE
   5
@@ -9159,25 +9137,25 @@ AcDbPolyline
  70
 1
  10
-9.879999999999999
+-0.25
  20
-14.81
+12.87
  10
-11.48
+-0.25
  20
-14.81
+17.48
  10
-11.48
+0.25
  20
-14.31
+17.48
  10
-9.879999999999999
+0.25
  20
-14.31
+12.87
 1001
 DIMENSIONX
 1000
-wall_id=W011
+wall_id=W007
   0
 LWPOLYLINE
   5
@@ -9195,25 +9173,25 @@ AcDbPolyline
  70
 1
  10
-5.63
+-0.25
  20
-14.56
+19.48
  10
-5.63
+-0.25
  20
-26.0
+21.12
  10
-6.13
+0.25
  20
-26.0
+21.12
  10
-6.13
+0.25
  20
-14.56
+19.48
 1001
 DIMENSIONX
 1000
-wall_id=W012
+wall_id=W007
   0
 LWPOLYLINE
   5
@@ -9231,25 +9209,25 @@ AcDbPolyline
  70
 1
  10
-11.48
+6.82
  20
-14.81
+13.12
  10
-18.34
+8.21
  20
-14.81
+13.12
  10
-18.34
+8.21
  20
-14.31
+12.62
  10
-11.48
+6.82
  20
-14.31
+12.62
 1001
 DIMENSIONX
 1000
-wall_id=W013
+wall_id=W008
   0
 LWPOLYLINE
   5
@@ -9267,25 +9245,25 @@ AcDbPolyline
  70
 1
  10
-21.14
+11.01
  20
-14.81
+13.12
  10
-28.0
+12.4
  20
-14.81
+13.12
  10
-28.0
+12.4
  20
-14.31
+12.62
  10
-21.14
+11.01
  20
-14.31
+12.62
 1001
 DIMENSIONX
 1000
-wall_id=W013
+wall_id=W008
   0
 LWPOLYLINE
   5
@@ -9303,25 +9281,25 @@ AcDbPolyline
  70
 1
  10
-11.23
+6.57
  20
-14.56
+12.87
  10
-11.23
+6.57
  20
-26.0
+15.795
  10
-11.73
+7.07
  20
-26.0
+15.795
  10
-11.73
+7.07
  20
-14.56
+12.87
 1001
 DIMENSIONX
 1000
-wall_id=W014
+wall_id=W009
   0
 LWPOLYLINE
   5
@@ -9339,25 +9317,25 @@ AcDbPolyline
  70
 1
  10
-27.75
+6.57
  20
-14.56
+18.195
  10
-27.75
+6.57
  20
-26.0
+21.12
  10
-28.25
+7.07
  20
-26.0
+21.12
  10
-28.25
+7.07
  20
-14.56
+18.195
 1001
 DIMENSIONX
 1000
-wall_id=W015
+wall_id=W009
   0
 LWPOLYLINE
   5
@@ -9375,25 +9353,25 @@ AcDbPolyline
  70
 1
  10
-0.0
+12.4
  20
-26.25
+13.12
  10
-5.88
+16.89
  20
-26.25
+13.12
  10
-5.88
+16.89
  20
-25.75
+12.62
  10
-0.0
+12.4
  20
-25.75
+12.62
 1001
 DIMENSIONX
 1000
-wall_id=W016
+wall_id=W010
   0
 LWPOLYLINE
   5
@@ -9411,25 +9389,25 @@ AcDbPolyline
  70
 1
  10
-5.88
+19.689999999999998
  20
-26.25
+13.12
  10
-8.688
+24.18
  20
-26.25
+13.12
  10
-8.688
+24.18
  20
-25.75
+12.62
  10
-5.88
+19.689999999999998
  20
-25.75
+12.62
 1001
 DIMENSIONX
 1000
-wall_id=W017
+wall_id=W010
   0
 LWPOLYLINE
   5
@@ -9447,25 +9425,25 @@ AcDbPolyline
  70
 1
  10
-10.688
+24.18
  20
-26.25
+13.12
  10
-11.48
+26.19
  20
-26.25
+13.12
  10
-11.48
+26.19
  20
-25.75
+12.62
  10
-10.688
+24.18
  20
-25.75
+12.62
 1001
 DIMENSIONX
 1000
-wall_id=W017
+wall_id=W011
   0
 LWPOLYLINE
   5
@@ -9483,25 +9461,25 @@ AcDbPolyline
  70
 1
  10
-11.48
+28.990000000000002
  20
-26.25
+13.12
  10
-20.4636
+31.0
  20
-26.25
+13.12
  10
-20.4636
+31.0
  20
-25.75
+12.62
  10
-11.48
+28.990000000000002
  20
-25.75
+12.62
 1001
 DIMENSIONX
 1000
-wall_id=W018
+wall_id=W011
   0
 LWPOLYLINE
   5
@@ -9519,29 +9497,641 @@ AcDbPolyline
  70
 1
  10
-24.9636
+23.93
  20
-26.25
+12.87
  10
-28.0
+23.93
  20
-26.25
+21.12
  10
-28.0
+24.43
  20
-25.75
+21.12
  10
-24.9636
+24.43
  20
-25.75
+12.87
+1001
+DIMENSIONX
+1000
+wall_id=W012
+  0
+LWPOLYLINE
+  5
+110
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+30.75
+ 20
+12.87
+ 10
+30.75
+ 20
+21.12
+ 10
+31.25
+ 20
+21.12
+ 10
+31.25
+ 20
+12.87
+1001
+DIMENSIONX
+1000
+wall_id=W013
+  0
+LWPOLYLINE
+  5
+111
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+0.0
+ 20
+21.37
+ 10
+6.82
+ 20
+21.37
+ 10
+6.82
+ 20
+20.87
+ 10
+0.0
+ 20
+20.87
+1001
+DIMENSIONX
+1000
+wall_id=W014
+  0
+LWPOLYLINE
+  5
+112
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+-0.25
+ 20
+21.12
+ 10
+-0.25
+ 20
+33.0
+ 10
+0.25
+ 20
+33.0
+ 10
+0.25
+ 20
+21.12
+1001
+DIMENSIONX
+1000
+wall_id=W015
+  0
+LWPOLYLINE
+  5
+113
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+6.82
+ 20
+21.37
+ 10
+10.69
+ 20
+21.37
+ 10
+10.69
+ 20
+20.87
+ 10
+6.82
+ 20
+20.87
+1001
+DIMENSIONX
+1000
+wall_id=W016
+  0
+LWPOLYLINE
+  5
+114
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+13.49
+ 20
+21.37
+ 10
+17.36
+ 20
+21.37
+ 10
+17.36
+ 20
+20.87
+ 10
+13.49
+ 20
+20.87
+1001
+DIMENSIONX
+1000
+wall_id=W016
+  0
+LWPOLYLINE
+  5
+115
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+6.57
+ 20
+21.12
+ 10
+6.57
+ 20
+25.86
+ 10
+7.07
+ 20
+25.86
+ 10
+7.07
+ 20
+21.12
+1001
+DIMENSIONX
+1000
+wall_id=W017
+  0
+LWPOLYLINE
+  5
+116
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+6.57
+ 20
+28.26
+ 10
+6.57
+ 20
+33.0
+ 10
+7.07
+ 20
+33.0
+ 10
+7.07
+ 20
+28.26
+1001
+DIMENSIONX
+1000
+wall_id=W017
+  0
+LWPOLYLINE
+  5
+117
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+17.36
+ 20
+21.37
+ 10
+19.37
+ 20
+21.37
+ 10
+19.37
+ 20
+20.87
+ 10
+17.36
+ 20
+20.87
 1001
 DIMENSIONX
 1000
 wall_id=W018
   0
+LWPOLYLINE
+  5
+118
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+22.17
+ 20
+21.37
+ 10
+24.18
+ 20
+21.37
+ 10
+24.18
+ 20
+20.87
+ 10
+22.17
+ 20
+20.87
+1001
+DIMENSIONX
+1000
+wall_id=W018
+  0
+LWPOLYLINE
+  5
+119
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+17.11
+ 20
+21.12
+ 10
+17.11
+ 20
+33.0
+ 10
+17.61
+ 20
+33.0
+ 10
+17.61
+ 20
+21.12
+1001
+DIMENSIONX
+1000
+wall_id=W019
+  0
+LWPOLYLINE
+  5
+11A
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+24.18
+ 20
+21.37
+ 10
+31.0
+ 20
+21.37
+ 10
+31.0
+ 20
+20.87
+ 10
+24.18
+ 20
+20.87
+1001
+DIMENSIONX
+1000
+wall_id=W020
+  0
+LWPOLYLINE
+  5
+11B
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+30.75
+ 20
+21.12
+ 10
+30.75
+ 20
+33.0
+ 10
+31.25
+ 20
+33.0
+ 10
+31.25
+ 20
+21.12
+1001
+DIMENSIONX
+1000
+wall_id=W021
+  0
+LWPOLYLINE
+  5
+11C
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+0.0
+ 20
+33.25
+ 10
+6.82
+ 20
+33.25
+ 10
+6.82
+ 20
+32.75
+ 10
+0.0
+ 20
+32.75
+1001
+DIMENSIONX
+1000
+wall_id=W022
+  0
+LWPOLYLINE
+  5
+11D
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+6.82
+ 20
+33.25
+ 10
+11.737200000000001
+ 20
+33.25
+ 10
+11.737200000000001
+ 20
+32.75
+ 10
+6.82
+ 20
+32.75
+1001
+DIMENSIONX
+1000
+wall_id=W023
+  0
+LWPOLYLINE
+  5
+11E
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+16.2372
+ 20
+33.25
+ 10
+17.36
+ 20
+33.25
+ 10
+17.36
+ 20
+32.75
+ 10
+16.2372
+ 20
+32.75
+1001
+DIMENSIONX
+1000
+wall_id=W023
+  0
+LWPOLYLINE
+  5
+11F
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+17.36
+ 20
+33.25
+ 10
+24.3852
+ 20
+33.25
+ 10
+24.3852
+ 20
+32.75
+ 10
+17.36
+ 20
+32.75
+1001
+DIMENSIONX
+1000
+wall_id=W024
+  0
+LWPOLYLINE
+  5
+120
+330
+17
+100
+AcDbEntity
+  8
+DX_WALL_FACE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+28.8852
+ 20
+33.25
+ 10
+31.0
+ 20
+33.25
+ 10
+31.0
+ 20
+32.75
+ 10
+28.8852
+ 20
+32.75
+1001
+DIMENSIONX
+1000
+wall_id=W024
+  0
 POINT
   5
-110
+121
 330
 17
 100
@@ -9561,9 +10151,9 @@ DIMENSIONX
 1000
 kind=plan_metadata
 1000
-plan_id=1BHK_06
+plan_id=2BHK_06
 1000
-bhk=1
+bhk=2
 1000
 schema_version=1.0
 1000
@@ -9573,7 +10163,7 @@ dxf_generator=DimensionX Plan Factory
   0
 TEXT
   5
-111
+122
 330
 17
 100
@@ -9585,17 +10175,17 @@ AcDbText
  10
 0.0
  20
-33.5
+40.5
  30
 0.0
  40
 1.0
   1
-DimensionX | 1BHK | PLAN 06
+DimensionX | 2BHK | PLAN 06
  11
 0.0
  21
-33.5
+40.5
  31
 0.0
 100
@@ -9603,7 +10193,7 @@ AcDbText
   0
 TEXT
   5
-112
+123
 330
 17
 100
@@ -9615,17 +10205,17 @@ AcDbText
  10
 0.0
  20
-32.2
+39.2
  30
 0.0
  40
 0.55
   1
-MAIN BODY 28'-00" x 26'-00"  |  FEET  |  WALL THK 0.50 ft  |  WALL HT 10.0 ft
+MAIN BODY 31'-00" x 33'-00"  |  FEET  |  WALL THK 0.50 ft  |  WALL HT 10.0 ft
  11
 0.0
  21
-32.2
+39.2
  31
 0.0
 100
@@ -9633,7 +10223,7 @@ AcDbText
   0
 LINE
   5
-113
+124
 330
 17
 100
@@ -9649,7 +10239,7 @@ AcDbLine
  30
 0.0
  11
-28.0
+31.0
  21
 -5.4
  31
@@ -9657,7 +10247,7 @@ AcDbLine
   0
 LINE
   5
-114
+125
 330
 17
 100
@@ -9681,7 +10271,7 @@ AcDbLine
   0
 LINE
   5
-115
+126
 330
 17
 100
@@ -9691,13 +10281,13 @@ DX_DIMENSION
 100
 AcDbLine
  10
-28.0
+31.0
  20
 -5.65
  30
 0.0
  11
-28.0
+31.0
  21
 -5.15
  31
@@ -9705,7 +10295,7 @@ AcDbLine
   0
 TEXT
   5
-116
+127
 330
 17
 100
@@ -9715,7 +10305,7 @@ DX_DIMENSION
 100
 AcDbText
  10
-14.0
+15.5
  20
 -5.15
  30
@@ -9723,11 +10313,11 @@ AcDbText
  40
 0.6
   1
-28'-00"
+31'-00"
  72
 1
  11
-14.0
+15.5
  21
 -5.15
  31
@@ -9739,7 +10329,7 @@ AcDbText
   0
 LINE
   5
-117
+128
 330
 17
 100
@@ -9757,13 +10347,13 @@ AcDbLine
  11
 -1.5
  21
-26.0
+33.0
  31
 0.0
   0
 LINE
   5
-118
+129
 330
 17
 100
@@ -9787,7 +10377,7 @@ AcDbLine
   0
 LINE
   5
-119
+12A
 330
 17
 100
@@ -9799,19 +10389,19 @@ AcDbLine
  10
 -1.75
  20
-26.0
+33.0
  30
 0.0
  11
 -1.25
  21
-26.0
+33.0
  31
 0.0
   0
 TEXT
   5
-11A
+12B
 330
 17
 100
@@ -9823,13 +10413,13 @@ AcDbText
  10
 -1.7
  20
-13.0
+16.5
  30
 0.0
  40
 0.6
   1
-26'-00"
+33'-00"
  50
 90.0
  72
@@ -9837,7 +10427,7 @@ AcDbText
  11
 -1.7
  21
-13.0
+16.5
  31
 0.0
 100
@@ -9847,7 +10437,7 @@ AcDbText
   0
 LINE
   5
-11B
+12C
 330
 17
 100
@@ -9857,21 +10447,21 @@ DX_DIMENSION
 100
 AcDbLine
  10
-30.0
+33.0
  20
-23.5
+30.5
  30
 0.0
  11
-30.0
+33.0
  21
-25.7
+32.7
  31
 0.0
   0
 LINE
   5
-11C
+12D
 330
 17
 100
@@ -9881,21 +10471,21 @@ DX_DIMENSION
 100
 AcDbLine
  10
-30.0
+33.0
  20
-25.7
+32.7
  30
 0.0
  11
-29.75
+32.75
  21
-25.15
+32.15
  31
 0.0
   0
 LINE
   5
-11D
+12E
 330
 17
 100
@@ -9905,21 +10495,21 @@ DX_DIMENSION
 100
 AcDbLine
  10
-30.0
+33.0
  20
-25.7
+32.7
  30
 0.0
  11
-30.25
+33.25
  21
-25.15
+32.15
  31
 0.0
   0
 TEXT
   5
-11E
+12F
 330
 17
 100
@@ -9929,9 +10519,9 @@ DX_DIMENSION
 100
 AcDbText
  10
-30.0
+33.0
  20
-25.85
+32.85
  30
 0.0
  40
@@ -9941,9 +10531,9 @@ N
  72
 1
  11
-30.0
+33.0
  21
-25.85
+32.85
  31
 0.0
 100
@@ -11041,7 +11631,7 @@ CREATED_BY_EZDXF
   3
 WRITTEN_BY_EZDXF
 350
-121
+132
   0
 DICTIONARYVAR
   5
@@ -11053,7 +11643,7 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-10-10T08:23:50.284585+00:00
+1.4.4 @ 2026-10-10T08:23:50.644113+00:00
   0
 VISUALSTYLE
   5
@@ -17607,7 +18197,7 @@ strokes_ogs.tif
   0
 DICTIONARYVAR
   5
-121
+132
 330
 2D
 100
@@ -17615,7 +18205,7 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-10-10T08:23:50.290252+00:00
+1.4.4 @ 2026-10-10T08:23:50.650157+00:00
   0
 ENDSEC
   0

@@ -11,9 +11,14 @@ export default function UploadDxfPage() {
   const user = getUser();
   const fileInputRef = useRef(null);
   const project = location.state?.project || null;
+  
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Check if the project already has a generated model
+  const isAlreadyUploaded = Boolean(project?.glb_url || project?.dxf_file_path);
 
   function handleFile(nextFile) {
     setError('');
@@ -37,29 +42,28 @@ export default function UploadDxfPage() {
     setFile(nextFile);
   }
 
-  // THE FUNCTION MUST SAY ASYNC HERE
   async function continueToStudio(event) {
     event.preventDefault();
-    setError('');
-    setStatus('Uploading and processing DXF. This may take a few seconds...');
     
     if (!file) {
       setError('Choose a DXF floor plan before continuing.');
       return;
     }
 
+    setError('');
+    setStatus('Uploading and processing DXF. This may take a few seconds...');
+    setLoading(true);
+    
     try {
       const formData = new FormData();
-      formData.append('dxfFile', file);
-      formData.append('projectId', project?.id ?? 'temp_project');
+      formData.append('projectId', project?.id ?? project?.projectId ?? 'temp_project'); 
+      formData.append('dxfFile', file); 
 
-      // Ensure your backend is running on port 4000!
       const response = await fetch('http://localhost:4000/api/dxf/upload', {
         method: 'POST',
         body: formData,
       });
 
-      // Read as text first to prevent JSON parse crashes
       const textData = await response.text();
       let data;
       
@@ -87,6 +91,8 @@ export default function UploadDxfPage() {
     } catch (err) {
       setError(err.message);
       setStatus('');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -138,47 +144,89 @@ export default function UploadDxfPage() {
               <span className="dxf-format-pill">.DXF · MAX 20 MB</span>
             </div>
 
-            <form onSubmit={continueToStudio}>
-              <input
-                ref={fileInputRef}
-                className="dxf-file-input"
-                type="file"
-                accept=".dxf,application/dxf"
-                onChange={(event) => handleFile(event.target.files?.[0] || null)}
-                aria-label="Choose DXF file"
-              />
-              <button
-                className={`dxf-dropzone${file ? ' has-file' : ''}`}
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  handleFile(event.dataTransfer.files?.[0] || null);
-                }}
-              >
-                <span className="dxf-upload-icon" aria-hidden="true">↑</span>
-                <strong>{file ? file.name : 'Choose a DXF floor plan'}</strong>
-                <span>{file ? `${(file.size / (1024 * 1024)).toFixed(2)} MB · Ready to continue` : 'Click to browse or drag and drop your file here'}</span>
-              </button>
-
-              <div className="dxf-requirements">
-                <h3>Before you continue</h3>
-                <ul>
-                  <li>File format must be <strong>.dxf</strong>.</li>
-                  <li>Maximum file size is <strong>20 MB</strong>.</li>
-                  <li>Keep the floor plan clean and drawn to scale where possible.</li>
-                </ul>
+            {/* Show VIEW HOUSE button if already uploaded */}
+            {isAlreadyUploaded ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center px-4 h-full">
+                <div className="w-16 h-16 bg-[#cdeef2] rounded-full flex items-center justify-center mb-4 text-[#800a1d]">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                  </svg>
+                </div>
+                <h3 className="text-[#800a1d] font-cinzel font-bold text-xl mb-2">House Already Generated</h3>
+                <p className="text-gray-500 font-sans text-sm mb-8">A 3D model already exists for this project.</p>
+                
+                <button
+                  onClick={() => navigate('/studio', { state: { project, glbUrl: project.glb_url, plan: project.plan } })}
+                  className="dxf-submit"
+                  style={{ padding: '12px 32px', fontSize: '13px' }}
+                >
+                  VIEW HOUSE <span aria-hidden="true">→</span>
+                </button>
               </div>
+            ) : (
+              // Otherwise, show the upload form
+              <form onSubmit={continueToStudio}>
+                <input
+                  ref={fileInputRef}
+                  className="dxf-file-input"
+                  type="file"
+                  accept=".dxf,application/dxf"
+                  onChange={(event) => handleFile(event.target.files?.[0] || null)}
+                  aria-label="Choose DXF file"
+                />
+                <button
+                  className={`dxf-dropzone${file ? ' has-file' : ''}`}
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    handleFile(event.dataTransfer.files?.[0] || null);
+                  }}
+                >
+                  <span className="dxf-upload-icon" aria-hidden="true">↑</span>
+                  <strong>{file ? file.name : 'Choose a DXF floor plan'}</strong>
+                  <span>{file ? `${(file.size / (1024 * 1024)).toFixed(2)} MB · Ready to continue` : 'Click to browse or drag and drop your file here'}</span>
+                </button>
 
-              {error && <p className="dxf-message dxf-message-error" role="alert">{error}</p>}
-              {status && <p className="dxf-message" role="status">{status}</p>}
+                <div className="dxf-requirements">
+                  <h3>Before you continue</h3>
+                  <ul>
+                    <li>File format must be <strong>.dxf</strong>.</li>
+                    <li>Maximum file size is <strong>20 MB</strong>.</li>
+                    <li>Keep the floor plan clean and drawn to scale where possible.</li>
+                  </ul>
+                </div>
 
-              <div className="dxf-actions">
-                {file && <button className="dxf-clear-button" type="button" onClick={() => { setFile(null); setError(''); setStatus(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}>Remove file</button>}
-                <button className="dxf-submit" type="submit">Continue to 3D workspace <span aria-hidden="true">→</span></button>
-              </div>
-            </form>
+                {error && <p className="dxf-message dxf-message-error" role="alert">{error}</p>}
+                {status && <p className="dxf-message" role="status">{status}</p>}
+
+                <div className="dxf-actions">
+                  {file && !loading && (
+                    <button 
+                      className="dxf-clear-button" 
+                      type="button" 
+                      onClick={() => { 
+                        setFile(null); 
+                        setError(''); 
+                        setStatus(''); 
+                        if (fileInputRef.current) fileInputRef.current.value = ''; 
+                      }}
+                    >
+                      Remove file
+                    </button>
+                  )}
+                  <button 
+                    className="dxf-submit" 
+                    type="submit" 
+                    disabled={loading || !file}
+                    style={{ opacity: (loading || !file) ? 0.6 : 1, cursor: (loading || !file) ? 'not-allowed' : 'pointer' }}
+                  >
+                    {loading ? 'Processing...' : 'Continue to 3D workspace'} <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+              </form>
+            )}
           </section>
         </div>
       </div>

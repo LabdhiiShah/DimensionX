@@ -97,6 +97,7 @@
   font-size: 10px;
   font-weight: 600;
   cursor: pointer;
+  user-select: none;
 }
 
 .admin-navigation button:hover,
@@ -639,4 +640,102 @@
   .admin-description-field {
     grid-column: 1;
   }
+}
+
+/* =========================================
+   KEBAB MENU (3 Dots Actions) - IMPROVED
+   ========================================= */
+
+.kebab-button {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--dx-burgundy);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kebab-button:hover, .kebab-button.active {
+  background-color: rgba(128, 10, 29, 0.1);
+}
+
+.kebab-menu {
+  position: absolute;
+  right: 10px; /* Anchor to the right side of the cell */
+  top: 85%;    /* Drop down just below the button */
+  z-index: 999; /* Ensure it floats above the table */
+  background: #ffffff;
+  border: 1px solid rgba(128, 10, 29, 0.15);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  min-width: 160px; /* Prevent text from wrapping */
+  padding: 6px 0;
+  animation: fadeInMenu 0.15s ease-out;
+}
+
+@keyframes fadeInMenu {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.kebab-menu button {
+  background: transparent;
+  border: none;
+  padding: 10px 16px;
+  text-align: left;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap; /* Prevents "Edit Project" from wrapping to two lines */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kebab-menu button:hover {
+  background-color: #f0f7f8; /* Light cyan hover */
+  color: var(--dx-burgundy);
+}
+
+.kebab-menu button.delete-option {
+  color: #cc0000;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  margin-top: 4px;
+  padding-top: 12px;
+}
+
+.kebab-menu button.delete-option:hover {
+  background-color: #ffe6e6;
+  color: #990000;
+}
+
+/* --- Mark Completed Button --- */
+.mark-completed-btn {
+  background: transparent;
+  color: var(--dx-burgundy);
+  border: 1.5px solid var(--dx-burgundy);
+  padding: 8px 16px;
+  border-radius: 20px; /* Matches the pill shape of the "Due in..." badge */
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mark-completed-btn:hover {
+  background: var(--dx-burgundy);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(128, 10, 29, 0.2);
 }

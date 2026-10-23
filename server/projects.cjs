@@ -17,12 +17,16 @@ function toApi(row) {
     siteAddress: row.site_address || '',
     dueDate: row.due_date || null,
     createdAt: row.created_at,
-    status: row.status || 'active', // <-- NEW
+    status: row.status || 'active',
+    glb_url: row.glb_url,
+    dxf_file_path: row.dxf_file_path,
+    plan: row.plan,
+    furniture_layout: row.furniture_layout || [] 
   };
 }
 
 const COLUMNS = `id, owner_employee_id, project_name, description, client_name, client_contact, designer_name,
-                 site_address, due_date::text AS due_date, created_at, status`; // <-- ADDED status 
+                 site_address, due_date::text AS due_date, created_at, status, glb_url, dxf_file_path, plan, furniture_layout`; 
 
 function createRouter(pool) {
   const db = { query: (...a) => (pool || defaultPool).query(...a) };
@@ -100,7 +104,6 @@ function createRouter(pool) {
       if (!clean.projectName) return res.status(400).json({ error: 'Project name is required.' });
       if (!clean.clientName) return res.status(400).json({ error: 'Client name is required.' });
 
-      // Prefer the employee ID selected from the employee directory. Verify it server-side.
       const selectedEmployeeId = String(b.designerEmployeeId || '').trim();
       if (!selectedEmployeeId) return res.status(400).json({ error: 'Please select a registered designer.' });
       const employeeResult = await db.query(
@@ -131,6 +134,7 @@ function createRouter(pool) {
       res.status(201).json({ project: toApi(result.rows[0]) });
     } catch (err) { next(err); }
   });
+
   // Update project status (Mark as Completed)
   router.patch('/:id/status', async (req, res, next) => {
     if (!req.user.is_admin) return res.status(403).json({ error: 'Only administrators can update project status.' });
@@ -153,13 +157,98 @@ function createRouter(pool) {
       res.json({ project: toApi(result.rows[0]) });
     } catch (err) { next(err); }
   });
+
+  // Save furniture layout
+  // --- MOVED ABOVE THE ERROR HANDLER ---
+  router.put('/:id/layout', async (req, res, next) => {
+    const { id } = req.params;
+    const { layout } = req.body;
+
+    if (!Array.isArray(layout)) {
+      return res.status(400).json({ error: 'Layout must be an array of furniture items.' });
+    }
+
+    try {
+      const result = await db.query(
+        `UPDATE projects SET furniture_layout = $1 WHERE id = $2 RETURNING id`,
+        [JSON.stringify(layout), id]
+      );
+      
+      if (result.rows.length === 0) return res.status(404).json({ error: 'Project not found.' });
+      
+      res.json({ success: true, message: 'Layout saved successfully.' });
+    } catch (err) { next(err); }
+  });
+
+  // --- NEW: Edit a project ---
+  router.put('/:id', async (req, res, next) => {
+    if (!req.user.is_admin) return res.status(403).json({ error: 'Only administrators can edit projects.' });
+    
+    const { id } = req.params;
+    const b = req.body || {};
+    
+    try {
+      const clean = {};
+      for (const key of Object.keys(LIMITS)) {
+        const v = b[key] == null ? '' : String(b[key]).trim();
+        if (v.length > LIMITS[key]) return res.status(400).json({ error: `${key} is too long.` });
+        clean[key] = v;
+      }
+      if (!clean.projectName) return res.status(400).json({ error: 'Project name is required.' });
+      if (!clean.clientName) return res.status(400).json({ error: 'Client name is required.' });
+
+      const selectedEmployeeId = String(b.designerEmployeeId || '').trim();
+      if (!selectedEmployeeId) return res.status(400).json({ error: 'Please select a registered designer.' });
+      
+      const employeeResult = await db.query(
+        `SELECT employee_id, full_name FROM users WHERE employee_id = $1 AND COALESCE(is_admin, false) = false`,
+        [selectedEmployeeId]
+      );
+      if (!employeeResult.rows.length) return res.status(400).json({ error: 'The selected designer is not a registered employee.' });
+      
+      clean.designerName = employeeResult.rows[0].full_name || selectedEmployeeId;
+
+      let dueDate = null;
+      if (b.dueDate) {
+        const s = String(b.dueDate);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s))) {
+          return res.status(400).json({ error: 'Due date must look like 2026-12-31.' });
+        }
+        dueDate = s;
+      }
+
+      const result = await db.query(
+        `UPDATE projects 
+         SET owner_employee_id = $1, project_name = $2, description = $3, client_name = $4, client_contact = $5, designer_name = $6, site_address = $7, due_date = $8
+         WHERE id = $9
+         RETURNING ${COLUMNS}`,
+        [selectedEmployeeId, clean.projectName, clean.description || null, clean.clientName, clean.clientContact || null, clean.designerName, clean.siteAddress || null, dueDate, id]
+      );
+      
+      if (result.rows.length === 0) return res.status(404).json({ error: 'Project not found.' });
+      res.json({ project: toApi(result.rows[0]) });
+    } catch (err) { next(err); }
+  });
+
+  // --- NEW: Delete a project ---
+  router.delete('/:id', async (req, res, next) => {
+    if (!req.user.is_admin) return res.status(403).json({ error: 'Only administrators can delete projects.' });
+    const { id } = req.params;
+    try {
+      const result = await db.query(`DELETE FROM projects WHERE id = $1 RETURNING id`, [id]);
+      if (result.rows.length === 0) return res.status(404).json({ error: 'Project not found.' });
+      res.json({ success: true, message: 'Project deleted.' });
+    } catch (err) { next(err); }
+  });
   
+  // Error Handler must be the very last middleware
   router.use((err, req, res, next) => {
     console.error('[projects] error:', err);
     if (err && err.code === '42P01') return res.status(500).json({ error: 'A required database table is missing. Check the schema in the dimensionx database.' });
+    if (err && err.code === '42703') return res.status(500).json({ error: `Database missing column: ${err.message}. Please run the ALTER TABLE commands.` });
     res.status(500).json({ error: 'Something went wrong with the project request.' });
   });
-
+  
   return router;
 }
 
