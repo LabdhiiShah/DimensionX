@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- UNIFIED DATABASE SETUP SCRIPT
--- Combines schema setup (schema.sql) and database dump (dimx.sql)
+-- Combines schema setup and database dump
 -- ==============================================================================
 
 -- 1. CREATE TABLES
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Projects Table (Incorporating columns from screenshots & schema.sql)
+-- Projects Table
 CREATE TABLE IF NOT EXISTS projects (
     id                SERIAL PRIMARY KEY,
     owner_employee_id VARCHAR(100) NOT NULL REFERENCES users(employee_id) ON DELETE CASCADE,
@@ -30,7 +30,9 @@ CREATE TABLE IF NOT EXISTS projects (
     due_date          DATE,
     status            VARCHAR(50) DEFAULT 'active',
     glb_url           TEXT,
+    dxf_file_path     TEXT,        -- <--- ADDED THIS
     plan              JSONB,
+    furniture_layout  JSONB,       -- <--- ADDED THIS
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -120,8 +122,7 @@ ON CONFLICT (style_id) DO UPDATE SET
     prefab_path = EXCLUDED.prefab_path;
 
 
--- 4. SEED DYNAMIC DATA (Users & Projects from dimx.sql)
--- Using ON CONFLICT DO NOTHING to prevent errors on re-runs
+-- 4. SEED DYNAMIC DATA (Users & Projects)
 -- ==============================================================================
 
 INSERT INTO users (id, employee_id, password_hash, is_admin, created_at) VALUES
@@ -137,7 +138,6 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- 5. SYNC SEQUENCES
--- Ensures that future inserts don't conflict with the manually inserted IDs above
 -- ==============================================================================
 
 SELECT setval('users_id_seq', COALESCE((SELECT MAX(id) FROM users), 1), true);
