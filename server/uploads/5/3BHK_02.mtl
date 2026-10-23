@@ -1,0 +1,204 @@
+newmtl DX_Floor
+Kd 0.48 0.45 0.4
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Roof
+Kd 0.57 0.55 0.52
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W001
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W002
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W003
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W004
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W005
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W006
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W007
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W008
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W009
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W010
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W011
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W012
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W013
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W014
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W015
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W016
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W017
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W018
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W019
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W020
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W021
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W022
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W023
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W024
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W025
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W026
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W027
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W028
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Wall_W029
+Kd 0.85 0.72 0.72
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Door
+Kd 0.48 0.29 0.16
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Window
+Kd 0.1 0.32 0.45
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
+newmtl DX_Balcony
+Kd 0.42 0.42 0.4
+Ka 0 0 0
+Ks 0 0 0
+Ns 10
+
