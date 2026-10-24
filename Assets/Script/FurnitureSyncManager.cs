@@ -33,6 +33,7 @@ public class FurnitureSyncManager : MonoBehaviour
 
     [Header("Drag-and-drop placement")]
     public LayerMask floorLayerMask = ~0;
+    public LayerMask wallLayerMask = ~0; // MAKE SURE THIS IS SET TO 'DX_Walls' IN THE INSPECTOR
     public float raycastMaxDistance = 100f;
 
     [Header("Camera pan/zoom (from website D-pad)")]
@@ -64,138 +65,50 @@ public class FurnitureSyncManager : MonoBehaviour
     private Texture2D _frameTexture;
     private RenderTexture _frameRenderTexture;
 
+    // --- WALL PAINTING STATE ---
+    private bool _isPaintMode = false;
+    private List<GameObject> _selectedWalls = new List<GameObject>();
+    private Dictionary<GameObject, Color> _originalWallColors = new Dictionary<GameObject, Color>();
+    private float _lastWallSelectTime = 0f; // Prevents double clicks
+
     // ---------------- Message shapes ----------------
-
     [Serializable] private class MessageEnvelope { public string type; }
+    [Serializable] private class SwapFurnitureMessage { public string type; public int type_id; public string type_name; public int style_id; public string style_name; public string prefab_path; public string requested_at; }
+    [Serializable] private class SwapResultMessage { public string type = "swap_result"; public int type_id; public bool success; public string message; }
+    [Serializable] private class PlaceFurnitureMessage { public string type; public int type_id; public string type_name; public int style_id; public string style_name; public string prefab_path; public float viewport_x; public float viewport_y; public string instance_id; }
+    [Serializable] private class PlaceResultMessage { public string type = "place_result"; public bool success; public string instance_id; public string message; public float world_x, world_y, world_z; }
+    [Serializable] private class MoveFurnitureMessage { public string type; public string instance_id; public float viewport_x; public float viewport_y; }
+    [Serializable] private class MoveResultMessage { public string type = "move_result"; public bool success; public string instance_id; public string message; }
+    [Serializable] private class CameraPanMessage { public string type; public float dx; public float dz; }
+    [Serializable] private class CameraZoomMessage { public string type; public float delta; }
+    [Serializable] private class CameraRotateMessage { public string type; public float degrees; }
+    [Serializable] private class RemoveFurnitureMessage { public string type; public string instance_id; }
+    [Serializable] private class RemoveResultMessage { public string type = "remove_result"; public bool success; public string instance_id; public string message; }
+    [Serializable] private class SwapInstanceMessage { public string type; public string instance_id; public int style_id; public string style_name; public string prefab_path; }
+    [Serializable] private class SwapInstanceResultMessage { public string type = "swap_instance_result"; public bool success; public string instance_id; public string message; }
+    [Serializable] private class RotateInstanceMessage { public string type; public string instance_id; public float degrees; }
+    [Serializable] private class ScaleInstanceMessage { public string type; public string instance_id; public float delta; }
+    [Serializable] private class InstanceTransformResultMessage { public string type = "instance_transform_result"; public bool success; public string instance_id; public string message; }
 
-    [Serializable]
-    private class SwapFurnitureMessage
-    {
-        public string type;
-        public int type_id;
-        public string type_name;
-        public int style_id;
-        public string style_name;
-        public string prefab_path;
-        public string requested_at;
-    }
-
-    [Serializable]
-    private class SwapResultMessage
-    {
-        public string type = "swap_result";
-        public int type_id;
-        public bool success;
-        public string message;
-    }
-
-    [Serializable]
-    private class PlaceFurnitureMessage
-    {
-        public string type;
-        public int type_id;
-        public string type_name;
-        public int style_id;
-        public string style_name;
-        public string prefab_path;
-        public float viewport_x;
-        public float viewport_y;
-        public string instance_id;
-    }
-
-    [Serializable]
-    private class PlaceResultMessage
-    {
-        public string type = "place_result";
-        public bool success;
-        public string instance_id;
-        public string message;
-        public float world_x, world_y, world_z;
-    }
-
-    [Serializable]
-    private class MoveFurnitureMessage
-    {
-        public string type;
-        public string instance_id;
-        public float viewport_x;
-        public float viewport_y;
-    }
-
-    [Serializable]
-    private class MoveResultMessage
-    {
-        public string type = "move_result";
-        public bool success;
-        public string instance_id;
-        public string message;
-    }
-
-    [Serializable]
-    private class CameraPanMessage { public string type; public float dx; public float dz; }
-
-    [Serializable]
-    private class CameraZoomMessage { public string type; public float delta; }
-
-    [Serializable]
-    private class CameraRotateMessage { public string type; public float degrees; }
-
-    [Serializable]
-    private class RemoveFurnitureMessage { public string type; public string instance_id; }
-
-    [Serializable]
-    private class RemoveResultMessage { public string type = "remove_result"; public bool success; public string instance_id; public string message; }
-
-    [Serializable]
-    private class SwapInstanceMessage { public string type; public string instance_id; public int style_id; public string style_name; public string prefab_path; }
-
-    [Serializable]
-    private class SwapInstanceResultMessage { public string type = "swap_instance_result"; public bool success; public string instance_id; public string message; }
-
-    [Serializable]
-    private class RotateInstanceMessage { public string type; public string instance_id; public float degrees; }
-
-    [Serializable]
-    private class ScaleInstanceMessage { public string type; public string instance_id; public float delta; }
-
-    [Serializable]
-    private class InstanceTransformResultMessage { public string type = "instance_transform_result"; public bool success; public string instance_id; public string message; }
+    // --- PAINT MESSAGES ---
+    [Serializable] private class TogglePaintMessage { public string type; public bool active; }
+    [Serializable] private class ApplyColorMessage { public string type; public string color; }
+    [Serializable] private class SelectWallMessage { public string type; public float viewport_x; public float viewport_y; }
+    [Serializable] private class WallSelectionMessage { public string type = "wall_selection"; public int count; }
 
     [Serializable]
     private class InstanceInfo
     {
-        public string instance_id;
-        public int type_id;
-        public int style_id;        // <--- NEW
-        public string style_name;
-        public string prefab_path;  // <--- NEW
-        public float viewport_x;
-        public float viewport_y;
-        public float world_x;
-        public float world_y;
-        public float world_z;
-        public float rotation_y_deg;
-        public float scale;
-        public float scale_multiplier;
+        public string instance_id; public int type_id; public int style_id; public string style_name; public string prefab_path;
+        public float viewport_x; public float viewport_y; public float world_x; public float world_y; public float world_z;
+        public float rotation_y_deg; public float scale; public float scale_multiplier;
     }
-
-    [Serializable]
-    private class InstancesMessage { public string type = "instances"; public InstanceInfo[] items; }
-
-    [Serializable]
-    private class FrameMessage { public string type = "frame"; public string image; public int width; public int height; }
-
-    [Serializable]
-    private class HelloMessage { public string type; public string role; }
-
-    [Serializable]
-    private class LaunchVrReadyMessage { public string type = "launch_vr_ready"; public string layout_path; }
-
-    [Serializable]
-    private class StatusMessage { public string type = "status"; public string message; }
-
-    [Serializable]
-    private class FloorPlanSnapshotMessage { public string type = "floorplan_snapshot"; public string image; public int width; public int height; public InstanceInfo[] items; }
+    [Serializable] private class InstancesMessage { public string type = "instances"; public InstanceInfo[] items; }
+    [Serializable] private class FrameMessage { public string type = "frame"; public string image; public int width; public int height; }
+    [Serializable] private class HelloMessage { public string type; public string role; }
+    [Serializable] private class LaunchVrReadyMessage { public string type = "launch_vr_ready"; public string layout_path; }
+    [Serializable] private class StatusMessage { public string type = "status"; public string message; }
+    [Serializable] private class FloorPlanSnapshotMessage { public string type = "floorplan_snapshot"; public string image; public int width; public int height; public InstanceInfo[] items; }
 
     [Serializable]
     private class PlacedInstanceEntry
@@ -273,7 +186,6 @@ public class FurnitureSyncManager : MonoBehaviour
     }
 
     private void RunOnMainThread(Action action) { lock (_queueLock) { _mainThreadQueue.Enqueue(action); } }
-
     public void SendToBridge(object message) { _ = SendJson(message); }
 
     public void ResetForNewPlan(string planKey)
@@ -281,6 +193,7 @@ public class FurnitureSyncManager : MonoBehaviour
         foreach (var kvp in _placedInstances) if (kvp.Value != null) Destroy(kvp.Value);
         _placedInstances.Clear();
         _slots.Clear();
+        ClearWallSelection();
 
         var safe = new StringBuilder();
         foreach (char ch in planKey ?? "") safe.Append(char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' ? ch : '_');
@@ -292,59 +205,38 @@ public class FurnitureSyncManager : MonoBehaviour
         Debug.Log($"[FurnitureSync] New plan session '{suffix}' ({_placedInstances.Count} piece(s) restored).");
     }
 
-    // --- NEW: Spawn saved furniture from the database ---
     public void SpawnSavedFurniture(SavedFurnitureItem[] items)
     {
         if (items == null || items.Length == 0) return;
-
         int spawnCount = 0;
         foreach (var entry in items)
         {
             if (string.IsNullOrEmpty(entry.prefab_path)) continue;
-
             var prefab = LoadPrefab(entry.prefab_path);
-            if (prefab == null)
-            {
-                Debug.LogWarning($"[FurnitureSync] Couldn't reload saved prefab: {entry.prefab_path}");
-                continue;
-            }
+            if (prefab == null) { continue; }
 
             var pos = new Vector3(entry.world_x, entry.world_y, entry.world_z);
             var rot = prefab.transform.rotation * Quaternion.Euler(0, entry.rotation_y_deg, 0);
-
             var instance = Instantiate(prefab, pos, rot);
 
             var slot = instance.GetComponent<FurnitureSlot>();
             if (slot == null) slot = instance.AddComponent<FurnitureSlot>();
-
             slot.baseScale = prefab.transform.localScale;
             slot.scaleMultiplier = entry.scale_multiplier > 0f ? entry.scale_multiplier : 1f;
             instance.transform.localScale = slot.baseScale * slot.scaleMultiplier;
 
             instance.name = $"{entry.style_name} [{entry.instance_id.Substring(0, Math.Min(6, entry.instance_id.Length))}]";
-            slot.typeId = entry.type_id;
-            slot.styleId = entry.style_id;
-            slot.label = entry.style_name;
-            slot.instanceId = entry.instance_id;
-            slot.prefabPath = entry.prefab_path;
+            slot.typeId = entry.type_id; slot.styleId = entry.style_id; slot.label = entry.style_name;
+            slot.instanceId = entry.instance_id; slot.prefabPath = entry.prefab_path;
 
             _placedInstances[entry.instance_id] = instance;
             spawnCount++;
         }
-
         Debug.Log($"[FurnitureSync] Restored {spawnCount} furniture pieces from the database.");
     }
 
-    public void RegisterSlot(int typeId, GameObject go)
-    {
-        _slots[typeId] = go;
-        Debug.Log($"[FurnitureSync] Registered slot for type_id {typeId}: {go.name}");
-    }
-
-    public void UnregisterSlot(int typeId, GameObject go)
-    {
-        if (_slots.TryGetValue(typeId, out var current) && current == go) _slots.Remove(typeId);
-    }
+    public void RegisterSlot(int typeId, GameObject go) { _slots[typeId] = go; }
+    public void UnregisterSlot(int typeId, GameObject go) { if (_slots.TryGetValue(typeId, out var current) && current == go) _slots.Remove(typeId); }
 
     private async Task ConnectLoop(CancellationToken token)
     {
@@ -353,9 +245,7 @@ public class FurnitureSyncManager : MonoBehaviour
             try
             {
                 _socket = new ClientWebSocket();
-                Debug.Log($"[FurnitureSync] Connecting to {bridgeUrl} ...");
                 await _socket.ConnectAsync(new Uri(bridgeUrl), token);
-                Debug.Log("[FurnitureSync] Connected to bridge.");
                 await SendJson(new HelloMessage { type = "hello", role = "unity" });
                 await ReceiveLoop(token);
             }
@@ -393,52 +283,18 @@ public class FurnitureSyncManager : MonoBehaviour
 
             switch (envelope.type)
             {
-                case "swap_furniture":
-                    var swap = JsonUtility.FromJson<SwapFurnitureMessage>(json);
-                    RunOnMainThread(() => ApplySwap(swap));
-                    break;
-                case "place_furniture":
-                    var place = JsonUtility.FromJson<PlaceFurnitureMessage>(json);
-                    RunOnMainThread(() => ApplyPlacement(place));
-                    break;
-                case "move_furniture":
-                    var move = JsonUtility.FromJson<MoveFurnitureMessage>(json);
-                    RunOnMainThread(() => ApplyMove(move));
-                    break;
-                case "camera_pan":
-                    var pan = JsonUtility.FromJson<CameraPanMessage>(json);
-                    RunOnMainThread(() => ApplyCameraPan(pan));
-                    break;
-                case "camera_zoom":
-                    var zoom = JsonUtility.FromJson<CameraZoomMessage>(json);
-                    RunOnMainThread(() => ApplyCameraZoom(zoom));
-                    break;
-                case "camera_rotate":
-                    var rotate = JsonUtility.FromJson<CameraRotateMessage>(json);
-                    RunOnMainThread(() => ApplyCameraRotate(rotate));
-                    break;
-                case "remove_furniture":
-                    var remove = JsonUtility.FromJson<RemoveFurnitureMessage>(json);
-                    RunOnMainThread(() => ApplyRemove(remove));
-                    break;
-                case "swap_instance":
-                    var swapInst = JsonUtility.FromJson<SwapInstanceMessage>(json);
-                    RunOnMainThread(() => ApplySwapInstance(swapInst));
-                    break;
-                case "rotate_instance":
-                    var rotateInst = JsonUtility.FromJson<RotateInstanceMessage>(json);
-                    RunOnMainThread(() => ApplyRotateInstance(rotateInst));
-                    break;
-                case "scale_instance":
-                    var scaleInst = JsonUtility.FromJson<ScaleInstanceMessage>(json);
-                    RunOnMainThread(() => ApplyScaleInstance(scaleInst));
-                    break;
-                case "launch_vr":
-                    RunOnMainThread(SaveLayoutAndSignalVr);
-                    break;
-                case "capture_floorplan":
-                    RunOnMainThread(CaptureFullFloorPlan);
-                    break;
+                case "swap_furniture": RunOnMainThread(() => ApplySwap(JsonUtility.FromJson<SwapFurnitureMessage>(json))); break;
+                case "place_furniture": RunOnMainThread(() => ApplyPlacement(JsonUtility.FromJson<PlaceFurnitureMessage>(json))); break;
+                case "move_furniture": RunOnMainThread(() => ApplyMove(JsonUtility.FromJson<MoveFurnitureMessage>(json))); break;
+                case "camera_pan": RunOnMainThread(() => ApplyCameraPan(JsonUtility.FromJson<CameraPanMessage>(json))); break;
+                case "camera_zoom": RunOnMainThread(() => ApplyCameraZoom(JsonUtility.FromJson<CameraZoomMessage>(json))); break;
+                case "camera_rotate": RunOnMainThread(() => ApplyCameraRotate(JsonUtility.FromJson<CameraRotateMessage>(json))); break;
+                case "remove_furniture": RunOnMainThread(() => ApplyRemove(JsonUtility.FromJson<RemoveFurnitureMessage>(json))); break;
+                case "swap_instance": RunOnMainThread(() => ApplySwapInstance(JsonUtility.FromJson<SwapInstanceMessage>(json))); break;
+                case "rotate_instance": RunOnMainThread(() => ApplyRotateInstance(JsonUtility.FromJson<RotateInstanceMessage>(json))); break;
+                case "scale_instance": RunOnMainThread(() => ApplyScaleInstance(JsonUtility.FromJson<ScaleInstanceMessage>(json))); break;
+                case "launch_vr": RunOnMainThread(SaveLayoutAndSignalVr); break;
+                case "capture_floorplan": RunOnMainThread(CaptureFullFloorPlan); break;
                 case "load_floorplan":
                     {
                         string raw = json;
@@ -449,12 +305,11 @@ public class FurnitureSyncManager : MonoBehaviour
                         });
                     }
                     break;
-                case "hello_ack":
-                    Debug.Log("[FurnitureSync] Bridge acknowledged handshake.");
-                    break;
-                default:
-                    Debug.Log($"[FurnitureSync] Unhandled message type: {envelope.type}");
-                    break;
+                // --- PAINT CASES ---
+                case "toggle_paint_mode": RunOnMainThread(() => TogglePaintMode(JsonUtility.FromJson<TogglePaintMessage>(json).active)); break;
+                case "apply_wall_color": RunOnMainThread(() => ApplyWallColor(JsonUtility.FromJson<ApplyColorMessage>(json).color)); break;
+                case "select_wall_at": RunOnMainThread(() => ApplyWallSelection(JsonUtility.FromJson<SelectWallMessage>(json))); break;
+                case "hello_ack": break;
             }
         }
         catch (Exception e) { Debug.LogWarning($"[FurnitureSync] Failed to parse message: {e.Message}\n{json}"); }
@@ -490,141 +345,73 @@ public class FurnitureSyncManager : MonoBehaviour
     private void ApplySwap(SwapFurnitureMessage msg)
     {
         if (msg == null) return;
-
-        if (!_slots.TryGetValue(msg.type_id, out var currentObject) || currentObject == null)
-        {
-            Debug.LogWarning($"[FurnitureSync] No registered slot for type_id {msg.type_id} ({msg.type_name}).");
-            _ = SendJson(new SwapResultMessage { type_id = msg.type_id, success = false, message = "No slot registered for this type_id" });
-            return;
-        }
+        if (!_slots.TryGetValue(msg.type_id, out var currentObject) || currentObject == null) return;
 
         var prefab = LoadPrefab(msg.prefab_path);
-        if (prefab == null)
-        {
-            Debug.LogError($"[FurnitureSync] Could not load prefab at path: {msg.prefab_path}");
-            _ = SendJson(new SwapResultMessage { type_id = msg.type_id, success = false, message = "Prefab not found: " + msg.prefab_path });
-            return;
-        }
+        if (prefab == null) return;
 
         var t = currentObject.transform;
-        Vector3 position = t.position;
-        Quaternion rotation = t.rotation;
-        Vector3 localScale = t.localScale;
-        Transform parent = t.parent;
-        int siblingIndex = t.GetSiblingIndex();
-        string previousName = currentObject.name;
-
-        Destroy(currentObject);
-
-        GameObject instance = Instantiate(prefab, position, rotation, parent);
-        instance.transform.localScale = localScale;
-        instance.transform.SetSiblingIndex(siblingIndex);
-        instance.name = previousName;
+        GameObject instance = Instantiate(prefab, t.position, t.rotation, t.parent);
+        instance.transform.localScale = t.localScale;
+        instance.name = currentObject.name;
 
         var slot = instance.GetComponent<FurnitureSlot>();
         if (slot == null) slot = instance.AddComponent<FurnitureSlot>();
-        slot.typeId = msg.type_id;
-        slot.styleId = msg.style_id;
-        slot.label = msg.style_name;
-        slot.prefabPath = msg.prefab_path;
+        slot.typeId = msg.type_id; slot.styleId = msg.style_id; slot.label = msg.style_name; slot.prefabPath = msg.prefab_path;
 
+        Destroy(currentObject);
         RegisterSlot(msg.type_id, instance);
-
-        Debug.Log($"[FurnitureSync] Swapped type_id {msg.type_id} -> {msg.style_name} at pos {position}");
         _ = SendJson(new SwapResultMessage { type_id = msg.type_id, success = true, message = $"Applied {msg.style_name}" });
     }
 
     private void ApplyPlacement(PlaceFurnitureMessage msg)
     {
-        if (msg == null) return;
-
-        if (streamCamera == null)
-        {
-            _ = SendJson(new PlaceResultMessage { success = false, message = "No stream camera configured on the Unity side" });
-            return;
-        }
-
+        if (msg == null || streamCamera == null) return;
         var prefab = LoadPrefab(msg.prefab_path);
-        if (prefab == null)
-        {
-            Debug.LogError($"[FurnitureSync] Could not load prefab at path: {msg.prefab_path}");
-            _ = SendJson(new PlaceResultMessage { success = false, message = "Prefab not found: " + msg.prefab_path });
-            return;
-        }
+        if (prefab == null) return;
 
         Vector3 viewportPoint = new Vector3(msg.viewport_x, 1f - msg.viewport_y, 0f);
         Ray ray = streamCamera.ViewportPointToRay(viewportPoint);
 
-        if (!Physics.Raycast(ray, out RaycastHit hit, raycastMaxDistance, floorLayerMask))
+        if (Physics.Raycast(ray, out RaycastHit hit, raycastMaxDistance, floorLayerMask))
         {
-            _ = SendJson(new PlaceResultMessage { success = false, message = "Drop point didn't land on the floor" });
-            return;
+            string instanceId = string.IsNullOrEmpty(msg.instance_id) ? Guid.NewGuid().ToString("N") : msg.instance_id;
+            GameObject instance = Instantiate(prefab, hit.point, prefab.transform.rotation);
+            instance.name = $"{msg.type_name} ({msg.style_name})";
+
+            var slot = instance.GetComponent<FurnitureSlot>();
+            if (slot == null) slot = instance.AddComponent<FurnitureSlot>();
+            slot.typeId = msg.type_id; slot.styleId = msg.style_id; slot.label = msg.style_name;
+            slot.instanceId = instanceId; slot.prefabPath = msg.prefab_path;
+            slot.baseScale = instance.transform.localScale; slot.scaleMultiplier = 1f;
+
+            _placedInstances[instanceId] = instance;
+            _ = SendJson(new PlaceResultMessage { success = true, instance_id = instanceId, message = $"Placed", world_x = hit.point.x, world_y = hit.point.y, world_z = hit.point.z });
+
+            if (autoSavePlacedInstances) SavePlacedInstances();
         }
-
-        string instanceId = string.IsNullOrEmpty(msg.instance_id) ? Guid.NewGuid().ToString("N") : msg.instance_id;
-
-        GameObject instance = Instantiate(prefab, hit.point, prefab.transform.rotation);
-        instance.name = $"{msg.type_name} ({msg.style_name}) [{instanceId.Substring(0, 6)}]";
-
-        var slot = instance.GetComponent<FurnitureSlot>();
-        if (slot == null) slot = instance.AddComponent<FurnitureSlot>();
-        slot.typeId = msg.type_id;
-        slot.styleId = msg.style_id;
-        slot.label = msg.style_name;
-        slot.instanceId = instanceId;
-        slot.prefabPath = msg.prefab_path;
-        slot.baseScale = instance.transform.localScale;
-        slot.scaleMultiplier = 1f;
-
-        _placedInstances[instanceId] = instance;
-
-        Debug.Log($"[FurnitureSync] Placed {msg.type_name}/{msg.style_name} (instance {instanceId}) at {hit.point}");
-        _ = SendJson(new PlaceResultMessage { success = true, instance_id = instanceId, message = $"Placed {msg.style_name}", world_x = hit.point.x, world_y = hit.point.y, world_z = hit.point.z });
-
-        if (autoSavePlacedInstances) SavePlacedInstances();
     }
 
     private void ApplyMove(MoveFurnitureMessage msg)
     {
-        if (msg == null) return;
-
-        if (!_placedInstances.TryGetValue(msg.instance_id, out var go) || go == null)
-        {
-            _ = SendJson(new MoveResultMessage { success = false, instance_id = msg.instance_id, message = "Unknown instance_id — was it placed this session?" });
-            return;
-        }
-        if (streamCamera == null)
-        {
-            _ = SendJson(new MoveResultMessage { success = false, instance_id = msg.instance_id, message = "No stream camera configured" });
-            return;
-        }
+        if (msg == null || streamCamera == null) return;
+        if (!_placedInstances.TryGetValue(msg.instance_id, out var go) || go == null) return;
 
         Vector3 viewportPoint = new Vector3(msg.viewport_x, 1f - msg.viewport_y, 0f);
         Ray ray = streamCamera.ViewportPointToRay(viewportPoint);
-        if (!Physics.Raycast(ray, out RaycastHit hit, raycastMaxDistance, floorLayerMask))
+        if (Physics.Raycast(ray, out RaycastHit hit, raycastMaxDistance, floorLayerMask))
         {
-            _ = SendJson(new MoveResultMessage { success = false, instance_id = msg.instance_id, message = "Drop point didn't land on the floor" });
-            return;
+            go.transform.position = hit.point;
+            _ = SendJson(new MoveResultMessage { success = true, instance_id = msg.instance_id, message = "Moved" });
+            if (autoSavePlacedInstances) SavePlacedInstances();
         }
-
-        go.transform.position = hit.point;
-        Debug.Log($"[FurnitureSync] Moved instance {msg.instance_id} to {hit.point}");
-        _ = SendJson(new MoveResultMessage { success = true, instance_id = msg.instance_id, message = "Moved" });
-
-        if (autoSavePlacedInstances) SavePlacedInstances();
     }
 
     private void ApplyRotateInstance(RotateInstanceMessage msg)
     {
         if (msg == null) return;
-        if (!_placedInstances.TryGetValue(msg.instance_id, out var go) || go == null)
-        {
-            Debug.LogWarning($"[FurnitureSync] rotate_instance: unknown instance_id {msg?.instance_id}");
-            _ = SendJson(new InstanceTransformResultMessage { success = false, instance_id = msg.instance_id, message = "Unknown instance_id" });
-            return;
-        }
+        if (!_placedInstances.TryGetValue(msg.instance_id, out var go) || go == null) return;
         go.transform.Rotate(Vector3.up, msg.degrees, Space.World);
-        Debug.Log($"[FurnitureSync] Rotated instance {msg.instance_id} by {msg.degrees}°, now facing {go.transform.eulerAngles}");
         _ = SendJson(new InstanceTransformResultMessage { success = true, instance_id = msg.instance_id, message = "Rotated" });
         if (autoSavePlacedInstances) SavePlacedInstances();
     }
@@ -632,16 +419,10 @@ public class FurnitureSyncManager : MonoBehaviour
     private void ApplyScaleInstance(ScaleInstanceMessage msg)
     {
         if (msg == null) return;
-        if (!_placedInstances.TryGetValue(msg.instance_id, out var go) || go == null)
-        {
-            Debug.LogWarning($"[FurnitureSync] scale_instance: unknown instance_id {msg?.instance_id}");
-            _ = SendJson(new InstanceTransformResultMessage { success = false, instance_id = msg.instance_id, message = "Unknown instance_id" });
-            return;
-        }
+        if (!_placedInstances.TryGetValue(msg.instance_id, out var go) || go == null) return;
 
         var slot = go.GetComponent<FurnitureSlot>();
         if (slot == null) slot = go.AddComponent<FurnitureSlot>();
-
         if (slot.baseScale == Vector3.zero) slot.baseScale = go.transform.localScale;
         if (slot.scaleMultiplier <= 0f) slot.scaleMultiplier = 1f;
 
@@ -649,177 +430,97 @@ public class FurnitureSyncManager : MonoBehaviour
         slot.scaleMultiplier = newMultiplier;
         go.transform.localScale = slot.baseScale * newMultiplier;
 
-        Debug.Log($"[FurnitureSync] Scaled instance {msg.instance_id} by delta={msg.delta}, now {newMultiplier:0.00}x base ({go.transform.localScale})");
         _ = SendJson(new InstanceTransformResultMessage { success = true, instance_id = msg.instance_id, message = "Scaled" });
         if (autoSavePlacedInstances) SavePlacedInstances();
     }
 
     private void ApplyCameraPan(CameraPanMessage msg)
     {
-        if (streamCamera == null) { Debug.LogWarning("[FurnitureSync] camera_pan received but no Stream Camera assigned."); return; }
-        if (msg == null) return;
+        if (streamCamera == null || msg == null) return;
         Vector3 right = streamCamera.transform.right;
         Vector3 forwardFlat = Vector3.ProjectOnPlane(streamCamera.transform.forward, Vector3.up);
         if (forwardFlat.sqrMagnitude < 0.0001f) forwardFlat = Vector3.forward;
         forwardFlat.Normalize();
-        Vector3 before = streamCamera.transform.position;
         streamCamera.transform.position += (right * msg.dx + forwardFlat * msg.dz) * cameraPanSpeed;
-        Debug.Log($"[FurnitureSync] camera_pan dx={msg.dx} dz={msg.dz} -> camera moved {before} to {streamCamera.transform.position}");
     }
 
     private void ApplyCameraZoom(CameraZoomMessage msg)
     {
-        if (streamCamera == null) { Debug.LogWarning("[FurnitureSync] camera_zoom received but no Stream Camera assigned."); return; }
-        if (msg == null) return;
-        if (streamCamera.orthographic)
-        {
-            float before = streamCamera.orthographicSize;
-            streamCamera.orthographicSize = Mathf.Clamp(streamCamera.orthographicSize + msg.delta * cameraZoomSpeed, minOrthographicSize, maxOrthographicSize);
-            Debug.Log($"[FurnitureSync] camera_zoom delta={msg.delta} -> orthographicSize {before} to {streamCamera.orthographicSize}");
-        }
-        else
-        {
-            streamCamera.transform.position += streamCamera.transform.forward * msg.delta * cameraZoomSpeed;
-            Debug.Log($"[FurnitureSync] camera_zoom delta={msg.delta} -> camera (perspective) dollied, now at {streamCamera.transform.position}");
-        }
+        if (streamCamera == null || msg == null) return;
+        if (streamCamera.orthographic) streamCamera.orthographicSize = Mathf.Clamp(streamCamera.orthographicSize + msg.delta * cameraZoomSpeed, minOrthographicSize, maxOrthographicSize);
+        else streamCamera.transform.position += streamCamera.transform.forward * msg.delta * cameraZoomSpeed;
     }
 
     private void ApplyCameraRotate(CameraRotateMessage msg)
     {
-        if (streamCamera == null) { Debug.LogWarning("[FurnitureSync] camera_rotate received but no Stream Camera assigned."); return; }
-        if (msg == null) return;
+        if (streamCamera == null || msg == null) return;
         streamCamera.transform.Rotate(Vector3.up, msg.degrees, Space.World);
-        Debug.Log($"[FurnitureSync] camera_rotate degrees={msg.degrees} -> camera now facing {streamCamera.transform.eulerAngles}");
     }
 
     private void ApplyRemove(RemoveFurnitureMessage msg)
     {
         if (msg == null) return;
-
-        if (!_placedInstances.TryGetValue(msg.instance_id, out var go) || go == null)
-        {
-            Debug.LogWarning($"[FurnitureSync] remove_furniture: unknown instance_id {msg?.instance_id}");
-            _ = SendJson(new RemoveResultMessage { success = false, instance_id = msg.instance_id, message = "Unknown instance_id — was it placed this session?" });
-            return;
-        }
-
-        Destroy(go);
-        _placedInstances.Remove(msg.instance_id);
-        Debug.Log($"[FurnitureSync] Removed instance {msg.instance_id}");
+        if (!_placedInstances.TryGetValue(msg.instance_id, out var go) || go == null) return;
+        Destroy(go); _placedInstances.Remove(msg.instance_id);
         _ = SendJson(new RemoveResultMessage { success = true, instance_id = msg.instance_id, message = "Removed" });
-
         if (autoSavePlacedInstances) SavePlacedInstances();
     }
 
     private void ApplySwapInstance(SwapInstanceMessage msg)
     {
         if (msg == null) return;
-
-        if (!_placedInstances.TryGetValue(msg.instance_id, out var currentObject) || currentObject == null)
-        {
-            Debug.LogWarning($"[FurnitureSync] swap_instance: unknown instance_id {msg?.instance_id}");
-            _ = SendJson(new SwapInstanceResultMessage { success = false, instance_id = msg.instance_id, message = "Unknown instance_id" });
-            return;
-        }
-
+        if (!_placedInstances.TryGetValue(msg.instance_id, out var currentObject) || currentObject == null) return;
         var prefab = LoadPrefab(msg.prefab_path);
-        if (prefab == null)
-        {
-            Debug.LogError($"[FurnitureSync] Could not load prefab at path: {msg.prefab_path}");
-            _ = SendJson(new SwapInstanceResultMessage { success = false, instance_id = msg.instance_id, message = "Prefab not found: " + msg.prefab_path });
-            return;
-        }
+        if (prefab == null) return;
 
         var oldSlot = currentObject.GetComponent<FurnitureSlot>();
         int typeId = oldSlot != null ? oldSlot.typeId : 0;
         float carryMultiplier = (oldSlot != null && oldSlot.scaleMultiplier > 0f) ? oldSlot.scaleMultiplier : 1f;
-
         var t = currentObject.transform;
-        Vector3 position = t.position;
-        Quaternion rotation = t.rotation;
-        Transform parent = t.parent;
 
-        Destroy(currentObject);
-
-        GameObject instance = Instantiate(prefab, position, rotation, parent);
+        GameObject instance = Instantiate(prefab, t.position, t.rotation, t.parent);
         Vector3 newBaseScale = instance.transform.localScale;
         instance.transform.localScale = newBaseScale * carryMultiplier;
-        instance.name = $"{msg.style_name} [{msg.instance_id.Substring(0, Math.Min(6, msg.instance_id.Length))}]";
 
         var slot = instance.GetComponent<FurnitureSlot>();
         if (slot == null) slot = instance.AddComponent<FurnitureSlot>();
-        slot.typeId = typeId;
-        slot.styleId = msg.style_id;
-        slot.label = msg.style_name;
-        slot.instanceId = msg.instance_id;
-        slot.prefabPath = msg.prefab_path;
-        slot.baseScale = newBaseScale;
-        slot.scaleMultiplier = carryMultiplier;
+        slot.typeId = typeId; slot.styleId = msg.style_id; slot.label = msg.style_name;
+        slot.instanceId = msg.instance_id; slot.prefabPath = msg.prefab_path;
+        slot.baseScale = newBaseScale; slot.scaleMultiplier = carryMultiplier;
 
+        Destroy(currentObject);
         _placedInstances[msg.instance_id] = instance;
-
-        Debug.Log($"[FurnitureSync] Swapped instance {msg.instance_id} -> {msg.style_name}");
         _ = SendJson(new SwapInstanceResultMessage { success = true, instance_id = msg.instance_id, message = $"Applied {msg.style_name}" });
-
         if (autoSavePlacedInstances) SavePlacedInstances();
     }
 
     private void CaptureFullFloorPlan()
     {
         Camera cam = floorPlanCamera != null ? floorPlanCamera : streamCamera;
-        if (cam == null)
-        {
-            _ = SendJson(new StatusMessage { message = "Can't capture a floor plan — assign a Floor Plan Camera (or at least a Stream Camera)." });
-            return;
-        }
+        if (cam == null) return;
         bool borrowingLiveCamera = floorPlanCamera == null;
 
         Bounds? bounds = ComputeRoomBounds();
-        if (bounds == null)
-        {
-            _ = SendJson(new StatusMessage { message = "Nothing to capture yet — place some furniture, or check that the floor's Layer is included in floorLayerMask." });
-            return;
-        }
+        if (bounds == null) return;
 
-        Vector3 prevPos = cam.transform.position;
-        Quaternion prevRot = cam.transform.rotation;
-        bool prevOrtho = cam.orthographic;
-        float prevOrthoSize = cam.orthographicSize;
-        RenderTexture prevTarget = cam.targetTexture;
+        Vector3 prevPos = cam.transform.position; Quaternion prevRot = cam.transform.rotation;
+        bool prevOrtho = cam.orthographic; float prevOrthoSize = cam.orthographicSize; RenderTexture prevTarget = cam.targetTexture;
 
         Bounds b = bounds.Value;
         const int w = 1280, h = 720;
         float aspect = (float)w / h;
-
         cam.transform.position = new Vector3(b.center.x, b.max.y + 5f, b.center.z);
         cam.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
         cam.orthographic = true;
         cam.orthographicSize = Mathf.Max(b.extents.z, b.extents.x / aspect) * 1.1f;
 
-        var rt = new RenderTexture(w, h, 24);
-        var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
-        var prevActive = RenderTexture.active;
+        var rt = new RenderTexture(w, h, 24); var tex = new Texture2D(w, h, TextureFormat.RGB24, false); var prevActive = RenderTexture.active;
+        cam.targetTexture = rt; cam.Render(); RenderTexture.active = rt; tex.ReadPixels(new Rect(0, 0, w, h), 0, 0); tex.Apply(false);
+        RenderTexture.active = prevActive; cam.targetTexture = prevTarget;
 
-        cam.targetTexture = rt;
-        cam.Render();
-        RenderTexture.active = rt;
-        tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-        tex.Apply(false);
+        if (borrowingLiveCamera) { cam.transform.position = prevPos; cam.transform.rotation = prevRot; cam.orthographic = prevOrtho; cam.orthographicSize = prevOrthoSize; }
 
-        RenderTexture.active = prevActive;
-        cam.targetTexture = prevTarget;
-
-        if (borrowingLiveCamera)
-        {
-            cam.transform.position = prevPos;
-            cam.transform.rotation = prevRot;
-            cam.orthographic = prevOrtho;
-            cam.orthographicSize = prevOrthoSize;
-        }
-
-        byte[] jpg = tex.EncodeToJPG(88);
-        Destroy(rt);
-        Destroy(tex);
+        byte[] jpg = tex.EncodeToJPG(88); Destroy(rt); Destroy(tex);
 
         var allItems = new List<InstanceInfo>();
         foreach (var kvp in _placedInstances)
@@ -831,9 +532,9 @@ public class FurnitureSyncManager : MonoBehaviour
             {
                 instance_id = kvp.Key,
                 type_id = slot ? slot.typeId : 0,
-                style_id = slot ? slot.styleId : 0, // <--- ADDED
+                style_id = slot ? slot.styleId : 0,
                 style_name = slot ? slot.label : "",
-                prefab_path = slot ? slot.prefabPath : "", // <--- ADDED
+                prefab_path = slot ? slot.prefabPath : "",
                 world_x = worldPos.x,
                 world_y = worldPos.y,
                 world_z = worldPos.z,
@@ -842,8 +543,6 @@ public class FurnitureSyncManager : MonoBehaviour
                 scale_multiplier = slot && slot.scaleMultiplier > 0f ? slot.scaleMultiplier : 1f,
             });
         }
-
-        Debug.Log($"[FurnitureSync] Captured full floor plan ({w}x{h}, room bounds {b.size}, {allItems.Count} furniture item(s)) using {(borrowingLiveCamera ? "Stream Camera (temporarily repositioned)" : "dedicated Floor Plan Camera")}.");
         _ = SendJson(new FloorPlanSnapshotMessage { image = Convert.ToBase64String(jpg), width = w, height = h, items = allItems.ToArray() });
     }
 
@@ -851,16 +550,8 @@ public class FurnitureSyncManager : MonoBehaviour
     {
         Bounds? result = null;
         void Encapsulate(Bounds bb) { if (result == null) result = bb; else { var r = result.Value; r.Encapsulate(bb); result = r; } }
-
-        foreach (var kvp in _placedInstances)
-        {
-            if (kvp.Value == null) continue;
-            foreach (var r in kvp.Value.GetComponentsInChildren<Renderer>()) Encapsulate(r.bounds);
-        }
-        foreach (var r in FindObjectsOfType<Renderer>())
-        {
-            if (((1 << r.gameObject.layer) & floorLayerMask) != 0) Encapsulate(r.bounds);
-        }
+        foreach (var kvp in _placedInstances) { if (kvp.Value == null) continue; foreach (var r in kvp.Value.GetComponentsInChildren<Renderer>()) Encapsulate(r.bounds); }
+        foreach (var r in FindObjectsOfType<Renderer>()) { if (((1 << r.gameObject.layer) & floorLayerMask) != 0) Encapsulate(r.bounds); }
         return result;
     }
 
@@ -878,23 +569,14 @@ public class FurnitureSyncManager : MonoBehaviour
 
     private void CaptureAndSendFrame()
     {
-        var prevTarget = streamCamera.targetTexture;
-        var prevActive = RenderTexture.active;
-
-        streamCamera.targetTexture = _frameRenderTexture;
-        streamCamera.Render();
-        RenderTexture.active = _frameRenderTexture;
-        _frameTexture.ReadPixels(new Rect(0, 0, streamWidth, streamHeight), 0, 0);
-        _frameTexture.Apply(false);
-
-        streamCamera.targetTexture = prevTarget;
-        RenderTexture.active = prevActive;
-
+        var prevTarget = streamCamera.targetTexture; var prevActive = RenderTexture.active;
+        streamCamera.targetTexture = _frameRenderTexture; streamCamera.Render(); RenderTexture.active = _frameRenderTexture;
+        _frameTexture.ReadPixels(new Rect(0, 0, streamWidth, streamHeight), 0, 0); _frameTexture.Apply(false);
+        streamCamera.targetTexture = prevTarget; RenderTexture.active = prevActive;
         byte[] jpg = _frameTexture.EncodeToJPG(streamJpegQuality);
         _ = SendJson(new FrameMessage { image = Convert.ToBase64String(jpg), width = streamWidth, height = streamHeight });
     }
 
-    private int _instanceUpdateLogCounter = 0;
     private void SendInstancesUpdate()
     {
         var list = new List<InstanceInfo>();
@@ -909,9 +591,9 @@ public class FurnitureSyncManager : MonoBehaviour
             {
                 instance_id = kvp.Key,
                 type_id = slot ? slot.typeId : 0,
-                style_id = slot ? slot.styleId : 0, // <--- ADDED
+                style_id = slot ? slot.styleId : 0,
                 style_name = slot ? slot.label : "",
-                prefab_path = slot ? slot.prefabPath : "", // <--- ADDED
+                prefab_path = slot ? slot.prefabPath : "",
                 viewport_x = vp.x,
                 viewport_y = 1f - vp.y,
                 world_x = worldPos.x,
@@ -922,9 +604,6 @@ public class FurnitureSyncManager : MonoBehaviour
                 scale_multiplier = slot && slot.scaleMultiplier > 0f ? slot.scaleMultiplier : 1f,
             });
         }
-        _instanceUpdateLogCounter++;
-        if (_instanceUpdateLogCounter % 5 == 0)
-            Debug.Log($"[FurnitureSync] Sending instances update: {_placedInstances.Count} tracked, {list.Count} in view.");
         _ = SendJson(new InstancesMessage { items = list.ToArray() });
     }
 
@@ -961,47 +640,38 @@ public class FurnitureSyncManager : MonoBehaviour
         }
         var file = new PlacedInstancesFile { items = entries.ToArray(), saved_at = DateTime.UtcNow.ToString("o") };
         string path = Path.Combine(Application.persistentDataPath, placedInstancesFileName);
-        try { File.WriteAllText(path, JsonUtility.ToJson(file)); }
-        catch (Exception e) { Debug.LogWarning($"[FurnitureSync] Failed to auto-save placed instances: {e.Message}"); }
+        try { File.WriteAllText(path, JsonUtility.ToJson(file)); } catch (Exception e) { Debug.LogWarning($"[FurnitureSync] Failed to auto-save placed instances: {e.Message}"); }
     }
 
     private void LoadPlacedInstancesIfPresent()
     {
         string path = Path.Combine(Application.persistentDataPath, placedInstancesFileName);
         if (!File.Exists(path)) return;
-
         try
         {
             var file = JsonUtility.FromJson<PlacedInstancesFile>(File.ReadAllText(path));
             if (file?.items == null) return;
-
             foreach (var entry in file.items)
             {
                 if (string.IsNullOrEmpty(entry.prefab_path)) continue;
                 var prefab = LoadPrefab(entry.prefab_path);
-                if (prefab == null) { Debug.LogWarning($"[FurnitureSync] Couldn't reload saved prefab: {entry.prefab_path}"); continue; }
+                if (prefab == null) continue;
 
-                var pos = new Vector3(entry.px, entry.py, entry.pz);
-                var rot = new Quaternion(entry.rx, entry.ry, entry.rz, entry.rw);
+                var pos = new Vector3(entry.px, entry.py, entry.pz); var rot = new Quaternion(entry.rx, entry.ry, entry.rz, entry.rw);
                 var instance = Instantiate(prefab, pos, rot);
                 instance.transform.localScale = new Vector3(entry.sx, entry.sy, entry.sz);
-                instance.name = $"{entry.style_name} [{entry.instance_id.Substring(0, Math.Min(6, entry.instance_id.Length))}]";
+                instance.name = $"{entry.style_name}";
 
                 var slot = instance.GetComponent<FurnitureSlot>();
                 if (slot == null) slot = instance.AddComponent<FurnitureSlot>();
-                slot.typeId = entry.type_id;
-                slot.styleId = entry.style_id;
-                slot.label = entry.style_name;
-                slot.instanceId = entry.instance_id;
-                slot.prefabPath = entry.prefab_path;
-
+                slot.typeId = entry.type_id; slot.styleId = entry.style_id; slot.label = entry.style_name;
+                slot.instanceId = entry.instance_id; slot.prefabPath = entry.prefab_path;
                 bool hasBaseScale = entry.base_sx != 0f || entry.base_sy != 0f || entry.base_sz != 0f;
                 slot.baseScale = hasBaseScale ? new Vector3(entry.base_sx, entry.base_sy, entry.base_sz) : instance.transform.localScale;
                 slot.scaleMultiplier = entry.scale_multiplier > 0f ? entry.scale_multiplier : 1f;
 
                 _placedInstances[entry.instance_id] = instance;
             }
-            Debug.Log($"[FurnitureSync] Restored {file.items.Length} previously placed instances from a past session.");
         }
         catch (Exception e) { Debug.LogWarning($"[FurnitureSync] Failed to load saved placed instances: {e.Message}"); }
     }
@@ -1031,20 +701,128 @@ public class FurnitureSyncManager : MonoBehaviour
                 sz = t.localScale.z,
             });
         }
-
         var snapshot = new FurnitureLayoutSnapshot { items = entries.ToArray(), saved_at = DateTime.UtcNow.ToString("o") };
         string path = Path.Combine(Application.persistentDataPath, layoutFileName);
 
-        try
+        try { File.WriteAllText(path, JsonUtility.ToJson(snapshot)); _ = SendJson(new LaunchVrReadyMessage { layout_path = path }); }
+        catch (Exception e) { _ = SendJson(new StatusMessage { message = "Failed to save layout for VR: " + e.Message }); }
+    }
+
+    // ==========================================
+    // --- WALL PAINTING LOGIC ---
+    // ==========================================
+
+    private void TogglePaintMode(bool active)
+    {
+        _isPaintMode = active;
+        ClearWallSelection();
+        Debug.Log($"[FurnitureSync] Paint Mode: {active}");
+    }
+
+    private void ApplyWallSelection(SelectWallMessage msg)
+    {
+        if (!_isPaintMode || streamCamera == null) return;
+
+        // Prevent double-click deselect
+        if (Time.time - _lastWallSelectTime < 0.2f) return;
+        _lastWallSelectTime = Time.time;
+
+        Vector3 viewportPoint = new Vector3(msg.viewport_x, 1f - msg.viewport_y, 0f);
+        Ray ray = streamCamera.ViewportPointToRay(viewportPoint);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, wallLayerMask))
         {
-            File.WriteAllText(path, JsonUtility.ToJson(snapshot));
-            Debug.Log($"[FurnitureSync] Layout saved ({entries.Count} items) to {path}");
-            _ = SendJson(new LaunchVrReadyMessage { layout_path = path });
+            // Walk up the hierarchy to find the correct root parent (e.g. "Wall_W001")
+            Transform root = hit.collider.transform;
+            while (root.parent != null)
+            {
+                if (root.name.StartsWith("Wall_") || root.name.StartsWith("Window_") || root.name.StartsWith("Door_"))
+                {
+                    break; // Found the root
+                }
+                root = root.parent;
+            }
+
+            Debug.Log($"[FurnitureSync] Selected: {root.name}");
+            ToggleWallSelection(root.gameObject);
         }
-        catch (Exception e)
+        else
         {
-            Debug.LogError($"[FurnitureSync] Failed to save layout: {e.Message}");
-            _ = SendJson(new StatusMessage { message = "Failed to save layout for VR: " + e.Message });
+            Debug.Log("[FurnitureSync] Raycast missed. Are the walls set to the DX_Walls layer AND do they have MeshColliders?");
         }
+    }
+
+    private void ToggleWallSelection(GameObject wallRoot)
+    {
+        var renderers = wallRoot.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return;
+
+        if (_selectedWalls.Contains(wallRoot))
+        {
+            // Deselect: Restore original color
+            _selectedWalls.Remove(wallRoot);
+            if (_originalWallColors.TryGetValue(wallRoot, out Color original))
+            {
+                foreach (var r in renderers)
+                {
+                    r.material.color = original;
+                    r.material.SetColor("_EmissionColor", Color.black); // Turn off glow
+                }
+            }
+        }
+        else
+        {
+            // Select: Highlight with a BRIGHT CYAN glow
+            _selectedWalls.Add(wallRoot);
+            if (!_originalWallColors.ContainsKey(wallRoot))
+                _originalWallColors[wallRoot] = renderers[0].material.color;
+
+            foreach (var r in renderers)
+            {
+                r.material.color = new Color(0.0f, 0.8f, 1.0f);
+                r.material.EnableKeyword("_EMISSION");
+                r.material.SetColor("_EmissionColor", new Color(0.0f, 0.4f, 0.6f));
+            }
+        }
+
+        Debug.Log($"[FurnitureSync] Wall selected/deselected. Total selected: {_selectedWalls.Count}");
+        _ = SendJson(new WallSelectionMessage { count = _selectedWalls.Count });
+    }
+
+    private void ApplyWallColor(string hexColor)
+    {
+        if (ColorUtility.TryParseHtmlString(hexColor, out Color color))
+        {
+            foreach (var wallRoot in _selectedWalls)
+            {
+                var renderers = wallRoot.GetComponentsInChildren<Renderer>();
+                foreach (var r in renderers)
+                {
+                    r.material.color = color;
+                    r.material.SetColor("_EmissionColor", Color.black); // Turn off glow after painting
+                }
+                _originalWallColors[wallRoot] = color;
+            }
+            Debug.Log($"[FurnitureSync] Applied color {hexColor} to {_selectedWalls.Count} walls.");
+        }
+    }
+
+    private void ClearWallSelection()
+    {
+        foreach (var wallRoot in _selectedWalls)
+        {
+            if (wallRoot != null && _originalWallColors.TryGetValue(wallRoot, out Color original))
+            {
+                var renderers = wallRoot.GetComponentsInChildren<Renderer>();
+                foreach (var r in renderers)
+                {
+                    r.material.color = original;
+                    r.material.SetColor("_EmissionColor", Color.black);
+                }
+            }
+        }
+        _selectedWalls.Clear();
+        _originalWallColors.Clear();
+        _ = SendJson(new WallSelectionMessage { count = 0 });
     }
 }

@@ -3,45 +3,21 @@ using System.Threading.Tasks;
 using UnityEngine;
 using GLTFast;
 
-/// <summary>
-/// Turns the GLB produced by the website's DXF pipeline into the live house, and then sets
-/// up everything that depends on that house:
-///
-///   1. Downloads + instantiates the GLB (the website sends "load_floorplan" through the bridge).
-///   2. Puts the pieces on layers and gives them colliders:
-///        Floor, Balcony_*   -> floorLayer  (the ONLY surface furniture can be dropped on)
-///        Wall_*, Window_*   -> wallLayer   (solid)
-///        Door_*             -> wallLayer   (no collider: you can walk through doorways)
-///        Roof               -> roofLayer   (hidden from the website cameras, visible in VR)
-///   3. Aligns the house so Unity world X/Z == the DXF's x/y (in metres).
-///   4. Frames the website's Interior (drag-and-drop) camera around the whole house, and
-///      keeps the roof out of both website cameras (otherwise you'd be looking at the roof,
-///      and drop raycasts would hit it).
-///   5. Works out where the VR rig should start (just inside the main entrance, facing in).
-///      VrSyncManager reads SpawnPosition / SpawnYaw on "View in VR".
-///   6. Tells FurnitureSyncManager to start a clean furniture session for this plan.
-///
-/// Setup: put this on the same GameObject as FurnitureSyncManager (SYNCMAN). Drag the old
-/// hard-coded test room (floor, Wall1-4, p1/p2 and the five furniture prefab instances) into
-/// "Hide On Load" so it switches off when a real house arrives.
-/// </summary>
 public class FloorplanLoader : MonoBehaviour
 {
     public static FloorplanLoader Instance { get; private set; }
-
-    // ---------------- Message shapes (JSON from the bridge) ----------------
 
     [Serializable] public class PlanVec2 { public float x; public float y; }
 
     [Serializable]
     public class PlanInfo
     {
-        public bool valid;                       // false/absent -> fall back to bounds-based guesses
-        public string key;                       // unique per upload; saved furniture is filed under it
+        public bool valid;
+        public string key;
         public string plan_id;
-        public PlanVec2 footprint_center_m = new PlanVec2(); // DXF x/y, metres
-        public PlanVec2 spawn_m = new PlanVec2();            // DXF x/y, metres
-        public PlanVec2 facing = new PlanVec2();             // unit vector, DXF x/y
+        public PlanVec2 footprint_center_m = new PlanVec2();
+        public PlanVec2 spawn_m = new PlanVec2();
+        public PlanVec2 facing = new PlanVec2();
     }
 
     [Serializable]
@@ -51,42 +27,29 @@ public class FloorplanLoader : MonoBehaviour
         public string glb_url;
         public string project_id;
         public PlanInfo plan = new PlanInfo();
-        public SavedFurnitureItem[] saved_furniture; // <--- NEW: Furniture layout from database
+        public SavedFurnitureItem[] saved_furniture;
     }
 
     [Serializable]
     private class FloorplanStatusMessage
     {
         public string type = "floorplan_status";
-        public string state;   // loading | ready | error
+        public string state;
         public string message;
         public string glb_url;
     }
 
-    // ---------------- Inspector ----------------
-
-    [Header("Layers (named for you by Editor/DimensionXLayerSetup)")]
-    public int floorLayer = 8;
-    public int wallLayer = 9;
-    public int roofLayer = 10;
-
     [Header("Website-controlled cameras (leave empty to use the ones on FurnitureSyncManager)")]
-    [Tooltip("The drag-and-drop camera. Defaults to FurnitureSyncManager.streamCamera.")]
     public Camera interiorCamera;
-    [Tooltip("Top-down camera used for the PDF. Defaults to FurnitureSyncManager.floorPlanCamera.")]
     public Camera floorPlanCamera;
 
     [Header("Interior (drag-and-drop) camera framing")]
-    [Tooltip("Camera tilt in degrees. 90 = straight down (plan view), lower = more of a dollhouse view. Higher values see over the front wall better.")]
     [Range(25f, 85f)] public float interiorPitch = 60f;
     [Range(25f, 90f)] public float interiorFov = 55f;
-    [Tooltip("1.0 = house just touches the frame edges.")]
     public float fitMargin = 1.2f;
 
     [Header("Old static test room - switched off when a house loads")]
     public GameObject[] hideOnLoad;
-
-    // ---------------- Public state (read by VrSyncManager) ----------------
 
     public bool HasHouse => _root != null;
     public Bounds HouseBounds { get; private set; }
@@ -111,8 +74,6 @@ public class FloorplanLoader : MonoBehaviour
         _gltf?.Dispose();
     }
 
-    // ---------------- Entry point (called by FurnitureSyncManager on "load_floorplan") ----------------
-
     public void HandleLoadMessage(string json)
     {
         LoadFloorplanMessage msg;
@@ -129,7 +90,6 @@ public class FloorplanLoader : MonoBehaviour
 
     private async Task LoadHouse(LoadFloorplanMessage msg)
     {
-        // The website re-sends this on every reconnect; don't rebuild a house we already have.
         if (msg.glb_url == _loadedUrl) { Report("ready", "House already loaded", msg.glb_url); return; }
         if (msg.glb_url == _loadingUrl) return;
 
@@ -142,14 +102,13 @@ public class FloorplanLoader : MonoBehaviour
         {
             gltf = new GltfImport();
             bool ok = await gltf.Load(msg.glb_url);
-            if (!ok) throw new Exception("could not download/parse " + msg.glb_url + ". For http:// URLs set Player Settings > Other Settings > Allow downloads over HTTP.");
+            if (!ok) throw new Exception("could not download/parse " + msg.glb_url);
 
             Report("loading", "Building the house...", msg.glb_url);
             root = new GameObject("DX_House");
             ok = await gltf.InstantiateMainSceneAsync(root.transform);
             if (!ok) throw new Exception("the glTF loaded but its scene could not be instantiated");
 
-            // A newer upload may have arrived while we were awaiting.
             if (_loadingUrl != msg.glb_url) { Destroy(root); gltf.Dispose(); return; }
 
             SwapInHouse(root, gltf, msg);
@@ -171,8 +130,6 @@ public class FloorplanLoader : MonoBehaviour
         }
     }
 
-    // ---------------- Building the scene around the new house ----------------
-
     private void SwapInHouse(GameObject root, GltfImport gltf, LoadFloorplanMessage msg)
     {
         PlanInfo plan = (msg.plan != null && msg.plan.valid) ? msg.plan : null;
@@ -181,10 +138,9 @@ public class FloorplanLoader : MonoBehaviour
         AlignToPlanAxes(root, plan);
         Physics.SyncTransforms();
 
-        // Out with the old house and the old test room.
         if (_root != null)
         {
-            _root.SetActive(false); // colliders vanish immediately, Destroy only happens at end of frame
+            _root.SetActive(false);
             Destroy(_root);
         }
         _gltf?.Dispose();
@@ -194,20 +150,21 @@ public class FloorplanLoader : MonoBehaviour
         _gltf = gltf;
         HouseBounds = ComputeHouseBounds(root);
 
-        // Furniture can only be dropped on the floor; start a clean session filed under this plan.
         var sync = FurnitureSyncManager.Instance;
         if (sync != null)
         {
-            sync.floorLayerMask = 1 << floorLayer;
+            // Setup floor mask dynamically based on name
+            int floorLayerIndex = LayerMask.NameToLayer("DX_Floor");
+            if (floorLayerIndex < 0) floorLayerIndex = 8; // Fallback
+
+            sync.floorLayerMask = 1 << floorLayerIndex;
             sync.ResetForNewPlan(plan != null && !string.IsNullOrEmpty(plan.key) ? plan.key : msg.glb_url);
 
-            // --- NEW: Spawn the saved furniture from the database ---
             if (msg.saved_furniture != null && msg.saved_furniture.Length > 0)
             {
                 sync.SpawnSavedFurniture(msg.saved_furniture);
             }
         }
-        else Debug.LogWarning("[FloorplanLoader] No FurnitureSyncManager in the scene - cameras are framed but nothing will be streamed.");
 
         SetUpWebsiteCameras(HouseBounds);
         ComputeSpawn(plan, HouseBounds);
@@ -218,6 +175,16 @@ public class FloorplanLoader : MonoBehaviour
 
     private void ClassifyAndCollide(GameObject root)
     {
+        // FIX: Look up layer indices by their exact string names
+        int floorLayerIndex = LayerMask.NameToLayer("DX_Floor");
+        int wallLayerIndex = LayerMask.NameToLayer("DX_Walls");
+        int roofLayerIndex = LayerMask.NameToLayer("DX_Roof");
+
+        // Fallbacks in case the layers aren't created yet
+        if (floorLayerIndex < 0) floorLayerIndex = 8;
+        if (wallLayerIndex < 0) wallLayerIndex = 9;
+        if (roofLayerIndex < 0) roofLayerIndex = 10;
+
         foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
         {
             string n = mf.name;
@@ -227,10 +194,11 @@ public class FloorplanLoader : MonoBehaviour
             bool collide = false;
             bool roof = false;
 
-            if (Is(n, p, "Floor") || Starts(n, p, "Balcony_")) { layer = floorLayer; collide = true; }
-            else if (Is(n, p, "Roof")) { layer = roofLayer; roof = true; }
-            else if (Starts(n, p, "Wall_") || Starts(n, p, "Window_")) { layer = wallLayer; collide = true; }
-            else if (Starts(n, p, "Door_")) { layer = wallLayer; } // doorway stays walk-through
+            if (Is(n, p, "Floor") || Starts(n, p, "Balcony_")) { layer = floorLayerIndex; collide = true; }
+            else if (Is(n, p, "Roof")) { layer = roofLayerIndex; roof = true; }
+            else if (Starts(n, p, "Wall_") || Starts(n, p, "Window_")) { layer = wallLayerIndex; collide = true; }
+            else if (Starts(n, p, "Door_")) { layer = wallLayerIndex; }
+
             if (layer < 0) continue;
 
             var go = mf.gameObject;
@@ -252,22 +220,12 @@ public class FloorplanLoader : MonoBehaviour
     private void AlignToPlanAxes(GameObject root, PlanInfo plan)
     {
         if (plan == null) return;
-
         Transform floor = FindNode(root.transform, "Floor");
         Renderer r = floor != null ? floor.GetComponentInChildren<Renderer>() : null;
         if (r == null) return;
-
         Vector3 c = r.bounds.center;
         float dot = c.x * plan.footprint_center_m.x + c.z * plan.footprint_center_m.y;
-        if (dot < -0.01f)
-        {
-            root.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
-            Debug.Log($"[FloorplanLoader] Floor landed at {c}, DXF says ({plan.footprint_center_m.x:0.00}, {plan.footprint_center_m.y:0.00}) - rotated the house 180 degrees to match.");
-        }
-        else
-        {
-            Debug.Log($"[FloorplanLoader] Floor landed at {c}; already matches the DXF axes.");
-        }
+        if (dot < -0.01f) root.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
     }
 
     private Bounds ComputeHouseBounds(GameObject root)
@@ -276,7 +234,7 @@ public class FloorplanLoader : MonoBehaviour
         var b = new Bounds(root.transform.position, Vector3.zero);
         foreach (var r in root.GetComponentsInChildren<Renderer>())
         {
-            if (r.gameObject.layer == roofLayer) continue;
+            if (r.gameObject.layer == LayerMask.NameToLayer("DX_Roof")) continue;
             if (!has) { b = r.bounds; has = true; }
             else b.Encapsulate(r.bounds);
         }
@@ -292,11 +250,7 @@ public class FloorplanLoader : MonoBehaviour
         PrepareWebsiteCamera(cam);
         PrepareWebsiteCamera(plan);
 
-        if (cam == null)
-        {
-            Debug.LogWarning("[FloorplanLoader] No interior camera (assign one here or on FurnitureSyncManager.streamCamera).");
-            return;
-        }
+        if (cam == null) return;
 
         cam.orthographic = false;
         cam.fieldOfView = interiorFov;
@@ -310,24 +264,22 @@ public class FloorplanLoader : MonoBehaviour
     private void PrepareWebsiteCamera(Camera cam)
     {
         if (cam == null) return;
-        cam.cullingMask &= ~(1 << roofLayer);
+        int roofIndex = LayerMask.NameToLayer("DX_Roof");
+        if (roofIndex >= 0) cam.cullingMask &= ~(1 << roofIndex);
     }
 
     private void ComputeSpawn(PlanInfo plan, Bounds b)
     {
-        Vector3 want = plan != null
-            ? new Vector3(plan.spawn_m.x, 0f, plan.spawn_m.y)
-            : new Vector3(b.center.x, 0f, b.center.z);
+        Vector3 want = plan != null ? new Vector3(plan.spawn_m.x, 0f, plan.spawn_m.y) : new Vector3(b.center.x, 0f, b.center.z);
         SpawnPosition = FindFloorPointNear(want);
-
         Vector2 f = plan != null ? new Vector2(plan.facing.x, plan.facing.y) : Vector2.up;
         SpawnYaw = Mathf.Atan2(f.x, f.y) * Mathf.Rad2Deg;
     }
 
     private Vector3 FindFloorPointNear(Vector3 want)
     {
-        int floorMask = 1 << floorLayer;
-        int wallMask = 1 << wallLayer;
+        int floorMask = 1 << LayerMask.NameToLayer("DX_Floor");
+        int wallMask = 1 << LayerMask.NameToLayer("DX_Walls");
 
         for (float radius = 0f; radius <= 6f; radius += 0.5f)
         {
@@ -341,19 +293,15 @@ public class FloorplanLoader : MonoBehaviour
                 return hit.point;
             }
         }
-        Debug.LogWarning("[FloorplanLoader] Couldn't find clear floor near the spawn point; using it as-is.");
         return want;
     }
 
     private static bool Is(string a, string b, string name) => a == name || b == name;
-
-    private static bool Starts(string a, string b, string prefix) =>
-        a.StartsWith(prefix, StringComparison.Ordinal) || b.StartsWith(prefix, StringComparison.Ordinal);
+    private static bool Starts(string a, string b, string prefix) => a.StartsWith(prefix, StringComparison.Ordinal) || b.StartsWith(prefix, StringComparison.Ordinal);
 
     private static Transform FindNode(Transform root, string name)
     {
-        foreach (var t in root.GetComponentsInChildren<Transform>(true))
-            if (t.name == name) return t;
+        foreach (var t in root.GetComponentsInChildren<Transform>(true)) if (t.name == name) return t;
         return null;
     }
 
@@ -361,7 +309,6 @@ public class FloorplanLoader : MonoBehaviour
     {
         Debug.Log($"[FloorplanLoader] {state}: {message}");
         var sync = FurnitureSyncManager.Instance;
-        if (sync != null)
-            sync.SendToBridge(new FloorplanStatusMessage { state = state, message = message, glb_url = url ?? "" });
+        if (sync != null) sync.SendToBridge(new FloorplanStatusMessage { state = state, message = message, glb_url = url ?? "" });
     }
 }
