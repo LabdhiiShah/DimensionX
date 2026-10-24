@@ -583,8 +583,13 @@ public class FurnitureSyncManager : MonoBehaviour
         foreach (var kvp in _placedInstances)
         {
             if (kvp.Value == null) continue;
+
             Vector3 vp = streamCamera.WorldToViewportPoint(kvp.Value.transform.position);
-            if (vp.z < 0) continue;
+
+            // --- DEBUGGING ---
+            // Temporarily comment out the vp.z < 0 check to force the dots to send
+            // if (vp.z < 0) continue; 
+
             var slot = kvp.Value.GetComponent<FurnitureSlot>();
             Vector3 worldPos = kvp.Value.transform.position;
             list.Add(new InstanceInfo
@@ -604,6 +609,10 @@ public class FurnitureSyncManager : MonoBehaviour
                 scale_multiplier = slot && slot.scaleMultiplier > 0f ? slot.scaleMultiplier : 1f,
             });
         }
+
+        // ADD THIS LOG
+        Debug.Log($"[FurnitureSync] Sending {list.Count} instances to React.");
+
         _ = SendJson(new InstancesMessage { items = list.ToArray() });
     }
 
