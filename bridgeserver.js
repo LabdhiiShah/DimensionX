@@ -5,7 +5,8 @@
  * launches your native VR build when asked to.
  *
  * Message types relayed:
- *   web -> unity : swap_furniture, place_furniture, launch_vr, load_floorplan
+ *   web -> unity : swap_furniture, place_furniture, launch_vr, load_floorplan,
+ *                  toggle_paint_mode, apply_wall_color, select_wall_at
  *   web -> vr    : enter_vr, exit_vr
  *   unity -> web : swap_result, place_result, status, frame (live view),
  *                  floorplan_status (house loading / ready / error)
@@ -119,8 +120,16 @@ wss.on('connection', (ws) => {
       case 'camera_zoom':
       case 'camera_rotate':
       case 'capture_floorplan':
+      // --- WALL PAINTING MESSAGES ---
+      case 'toggle_paint_mode':
+      case 'apply_wall_color':
+      case 'select_wall_at':
         if (msg.type !== 'camera_pan' && msg.type !== 'camera_rotate') {
-          console.log(`[bridge] ${msg.type} -> unity`, ['place_furniture','move_furniture','rotate_instance','scale_instance'].includes(msg.type) ? { instance_id: msg.instance_id, degrees: msg.degrees, delta: msg.delta } : msg);
+          console.log(`[bridge] ${msg.type} -> unity`, 
+            ['place_furniture','move_furniture','rotate_instance','scale_instance','select_wall_at','apply_wall_color'].includes(msg.type) 
+            ? { instance_id: msg.instance_id, degrees: msg.degrees, delta: msg.delta, color: msg.color, x: msg.viewport_x, y: msg.viewport_y } 
+            : msg
+          );
         }
         broadcastTo('unity', msg);
         break;
@@ -171,6 +180,7 @@ wss.on('connection', (ws) => {
       case 'floorplan_status':
       case 'vr_status':
       case 'status':
+      case 'wall_selection': // <--- Added so React receives wall count
         console.log('[bridge] result ->', msg);
         broadcastTo('web', msg);
         break;

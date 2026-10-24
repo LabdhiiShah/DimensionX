@@ -1,6 +1,6 @@
 -- ==============================================================================
--- UNIFIED DATABASE SETUP SCRIPT
--- Combines schema setup and database dump
+-- UNIFIED DATABASE SETUP SCRIPT (FINAL)
+-- Combines schema setup, database dump, and all recent feature additions
 -- ==============================================================================
 
 -- 1. CREATE TABLES
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Projects Table
+-- Projects Table (Includes all columns for 3D models and furniture)
 CREATE TABLE IF NOT EXISTS projects (
     id                SERIAL PRIMARY KEY,
     owner_employee_id VARCHAR(100) NOT NULL REFERENCES users(employee_id) ON DELETE CASCADE,
@@ -30,9 +30,9 @@ CREATE TABLE IF NOT EXISTS projects (
     due_date          DATE,
     status            VARCHAR(50) DEFAULT 'active',
     glb_url           TEXT,
-    dxf_file_path     TEXT,        -- <--- ADDED THIS
+    dxf_file_path     TEXT,
     plan              JSONB,
-    furniture_layout  JSONB,       -- <--- ADDED THIS
+    furniture_layout  JSONB,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS furniture_style (
     CONSTRAINT furniture_style_type_id_style_name_key UNIQUE (type_id, style_name)
 );
 
--- CAD Projects Table (From dimx.sql)
+-- CAD Projects Table
 CREATE TABLE IF NOT EXISTS cad_project (
     project_id   SERIAL PRIMARY KEY,
     project_name VARCHAR(100) NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS cad_project (
     upload_date  TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Generated Rooms Table (From dimx.sql)
+-- Generated Rooms Table
 CREATE TABLE IF NOT EXISTS generated_room (
     room_id    SERIAL PRIMARY KEY,
     project_id INTEGER NOT NULL REFERENCES cad_project(project_id) ON DELETE CASCADE,
@@ -138,6 +138,7 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- 5. SYNC SEQUENCES
+-- Ensures that future inserts don't conflict with the manually inserted IDs above
 -- ==============================================================================
 
 SELECT setval('users_id_seq', COALESCE((SELECT MAX(id) FROM users), 1), true);
