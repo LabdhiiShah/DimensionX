@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { ChromePicker } from 'react-color';
 
 export default function PaintSidebar({ bridge, onPaintModeChange, color, setColor }) {
   const [isOpen, setIsOpen] = useState(false);
   const [paintMode, setPaintMode] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -10,10 +12,8 @@ export default function PaintSidebar({ bridge, onPaintModeChange, color, setColo
     const newMode = !paintMode;
     
     if (newMode) {
-      // Entering paint mode
       bridge.send({ type: 'toggle_paint_mode', active: true });
     } else {
-      // Exiting paint mode: Apply the selected color first, then exit
       bridge.send({ type: 'apply_wall_color', color });
       bridge.send({ type: 'toggle_paint_mode', active: false });
     }
@@ -23,25 +23,26 @@ export default function PaintSidebar({ bridge, onPaintModeChange, color, setColo
   };
 
   const handleColorChange = (newColor) => {
-    setColor(newColor); // Just update the local state, don't send to Unity yet
+    setColor(newColor.hex);
   };
 
   const presetColors = [
-    '#ffffff', '#f5f5dc', '#e6e6fa', '#ffdab9', 
-    '#cdeef3', '#a3c2c2', '#87ceeb', '#b0c4de', 
-    '#ffb6c1', '#ffa07a', '#f08080', '#800a1d', 
-    '#90ee90', '#556b2f', '#d3d3d3', '#4a4a4a'  
+    '#9E0142', '#D53E4F', '#F46D43', '#FDAE61',
+    '#FEE08B', '#E6F598', '#ABDDA4', '#66C2A5',
+    '#3288BD', '#5E4FA2', '#66C5CC', '#F6CF71',
+    '#F89C74', '#DCB0F2', '#87C55F', '#9EB9F3',
+    '#FE88B1', '#B3B3B3', '#2B3A42', '#E8D5B5' 
   ];
 
   return (
     <div className="paint-tool-container" onClick={(e) => e.stopPropagation()}>
+      
+      {/* NEW THEME-ALIGNED ICON: Paint Roller */}
       <button className="paint-trigger-btn" onClick={toggleSidebar} title="Wall Color Picker">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="9" strokeWidth="1.5" />
-          <path d="M12 3v2m0 14v2M3 12h2m14 0h2" strokeWidth="1.5"/>
-          <path d="M18.5 5.5l-6 6" strokeWidth="2" />
-          <path d="M15.5 3.5l5 5-1.5 1.5-5-5z" fill="currentColor"/>
-          <path d="M12 12l-2 2" strokeWidth="2" />
+          <rect x="2" y="2" width="16" height="6" rx="2" />
+          <path d="M18 5h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-8v3" />
+          <path d="M10 15h4v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h2z" />
         </svg>
       </button>
 
@@ -49,41 +50,85 @@ export default function PaintSidebar({ bridge, onPaintModeChange, color, setColo
         <div className="paint-sidebar">
           <h3>Paint Walls</h3>
           
-          {/* Changed button text */}
           <button 
             className={paintMode ? 'active' : ''} 
             onClick={togglePaintMode}
+            style={{ 
+              backgroundColor: paintMode ? '#2e7d32' : undefined, // Green when active
+              color: paintMode ? '#fff' : undefined 
+            }}
           >
             {paintMode ? 'APPLY & STOP' : 'PAINT'}
           </button>
 
           {paintMode && (
             <p style={{ fontSize: '11px', color: '#666', margin: 0, textAlign: 'center' }}>
-              Click walls to select them (they turn grey), pick a color, then click APPLY & STOP.
+              Click walls to select them, pick a color, then click APPLY & STOP.
             </p>
           )}
 
-          <div className="paint-color-picker-wrapper">
+          <div className="paint-color-picker-wrapper" style={{ position: 'relative' }}>
             <label>Custom Color</label>
-            <input 
-              type="color" 
-              className="paint-color-input"
-              value={color} 
-              onChange={(e) => handleColorChange(e.target.value)} 
-            />
+            
+            <div 
+              onClick={() => setShowPicker(!showPicker)}
+              style={{
+                width: '100%',
+                height: '40px',
+                backgroundColor: color,
+                borderRadius: '8px',
+                border: '1px solid #ccc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: color === '#ffffff' || color === '#f5f5dc' ? '#333' : '#fff',
+                fontWeight: 'bold',
+                fontSize: '12px',
+                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)'
+              }}
+            >
+              {color.toUpperCase()}
+            </div>
+
+            {showPicker && (
+              <div style={{ position: 'absolute', top: '100%', left: -10, zIndex: 9999, marginTop: '10px' }}>
+                <div 
+                  style={{ position: 'fixed', inset: 0 }} 
+                  onClick={() => setShowPicker(false)} 
+                />
+                <ChromePicker 
+                  color={color} 
+                  onChangeComplete={handleColorChange} 
+                  disableAlpha={true}
+                />
+              </div>
+            )}
           </div>
 
           <div className="paint-color-picker-wrapper">
             <label>Presets</label>
-            <div className="paint-presets">
+            <div 
+              className="paint-presets" 
+              style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(4, 1fr)', 
+                gap: '12px 8px' 
+              }}
+            >
               {presetColors.map((c) => (
-                <button
-                  key={c}
-                  className="paint-preset-swatch"
-                  style={{ backgroundColor: c }}
-                  onClick={() => handleColorChange(c)}
-                  title={c}
-                />
+                <div key={c} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                  <button
+                    className="paint-preset-swatch"
+                    style={{ backgroundColor: c, width: '100%', aspectRatio: '1' }}
+                    onClick={() => {
+                      setColor(c);
+                      setShowPicker(false);
+                    }}
+                    title={c}
+                  />
+                  <span style={{ fontSize: '9px', color: '#666', fontFamily: 'monospace' }}>{c.toUpperCase()}</span>
+                </div>
               ))}
             </div>
           </div>

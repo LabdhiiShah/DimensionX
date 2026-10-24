@@ -3,7 +3,14 @@ import CameraControls from './CameraControls.jsx';
 import SelectionBar from './SelectionBar.jsx';
 import PaintSidebar from './PaintSidebar.jsx';
 
-export default function DesignStudio({ bridge, frameSrc, instances, tag = '3D VIEW FROM UNITY', onPaintModeChange }) {
+export default function DesignStudio({ 
+  bridge, 
+  frameSrc, 
+  instances, 
+  tag = '3D VIEW FROM UNITY', 
+  onPaintModeChange, 
+  showPaintTools = true // <-- NEW: Defaults to true
+}) {
   const { send } = bridge;
   const stageRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
@@ -11,9 +18,8 @@ export default function DesignStudio({ bridge, frameSrc, instances, tag = '3D VI
   const [selectedId, setSelectedId] = useState(null);
   const [hidden, setHidden] = useState(() => new Set()); 
   const [isPaintMode, setIsPaintMode] = useState(false);
-  
-  // NEW: Lift the color state up so it can be shared
   const [paintColor, setPaintColor] = useState('#ffffff');
+  const clickLockRef = useRef(false);
 
   useEffect(() => {
     if (onPaintModeChange) onPaintModeChange(isPaintMode);
@@ -63,10 +69,12 @@ export default function DesignStudio({ bridge, frameSrc, instances, tag = '3D VI
   }
   
   function onStageClick(ev) {
-    const f = fractionOf(ev);
+    if (clickLockRef.current) return;
+    clickLockRef.current = true;
+    setTimeout(() => { clickLockRef.current = false; }, 250);
 
+    const f = fractionOf(ev);
     if (isPaintMode) {
-      // Send click to Unity to toggle wall selection
       send({ type: 'select_wall_at', viewport_x: f.x, viewport_y: f.y });
       return;
     }
@@ -90,7 +98,18 @@ export default function DesignStudio({ bridge, frameSrc, instances, tag = '3D VI
   }
 
   return (
-    <div className="studio">
+    <div className="studio" style={{ position: 'relative' }}>
+      
+      {/* CONDITIONALLY RENDER THE PAINT SIDEBAR */}
+      {showPaintTools && (
+        <PaintSidebar 
+          bridge={bridge} 
+          onPaintModeChange={setIsPaintMode} 
+          color={paintColor} 
+          setColor={setPaintColor} 
+        />
+      )}
+
       <div
         ref={stageRef}
         className={'stage' + (dragOver ? ' drag-over' : '') + (selectedId ? ' placing' : '')}
@@ -100,14 +119,6 @@ export default function DesignStudio({ bridge, frameSrc, instances, tag = '3D VI
         onDrop={onDrop}
         onClick={onStageClick}
       >
-        {/* Pass color state down to the sidebar */}
-        <PaintSidebar 
-          bridge={bridge} 
-          onPaintModeChange={setIsPaintMode} 
-          color={paintColor} 
-          setColor={setPaintColor} 
-        />
-
         {frameSrc
           ? <img className="stage-img" src={frameSrc} alt="Live design view from Unity" draggable={false} />
           : (
@@ -126,7 +137,7 @@ export default function DesignStudio({ bridge, frameSrc, instances, tag = '3D VI
               left: inst.viewport_x * 100 + '%', 
               top: inst.viewport_y * 100 + '%', 
               opacity: isPaintMode ? 0 : 1,
-              pointerEvents: isPaintMode ? 'none' : 'auto' // <--- FIX: Disable clicks in paint mode
+              pointerEvents: isPaintMode ? 'none' : 'auto'
             }}
             title={inst.style_name || 'Piece'}
             onClick={(ev) => onMarkerClick(ev, inst.instance_id)}
