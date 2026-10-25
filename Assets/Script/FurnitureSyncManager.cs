@@ -69,15 +69,32 @@ public class FurnitureSyncManager : MonoBehaviour
     private bool _isPaintMode = false;
     private List<GameObject> _selectedWalls = new List<GameObject>();
     private Dictionary<GameObject, Color> _originalWallColors = new Dictionary<GameObject, Color>();
-    private float _lastWallSelectTime = 0f; // Prevents double clicks
+    private float _lastWallSelectTime = 0f;
 
     // ---------------- Message shapes ----------------
     [Serializable] private class MessageEnvelope { public string type; }
     [Serializable] private class SwapFurnitureMessage { public string type; public int type_id; public string type_name; public int style_id; public string style_name; public string prefab_path; public string requested_at; }
     [Serializable] private class SwapResultMessage { public string type = "swap_result"; public int type_id; public bool success; public string message; }
-    [Serializable] private class PlaceFurnitureMessage { public string type; public int type_id; public string type_name; public int style_id; public string style_name; public string prefab_path; public float viewport_x; public float viewport_y; public string instance_id; }
+
+    [Serializable]
+    private class PlaceFurnitureMessage
+    {
+        public string type; public int type_id; public string type_name; public int style_id; public string style_name; public string prefab_path;
+        public float viewport_x; public float viewport_y;
+        public float x; public float y;
+        public string instance_id;
+    }
+
     [Serializable] private class PlaceResultMessage { public string type = "place_result"; public bool success; public string instance_id; public string message; public float world_x, world_y, world_z; }
-    [Serializable] private class MoveFurnitureMessage { public string type; public string instance_id; public float viewport_x; public float viewport_y; }
+
+    [Serializable]
+    private class MoveFurnitureMessage
+    {
+        public string type; public string instance_id;
+        public float viewport_x; public float viewport_y;
+        public float x; public float y;
+    }
+
     [Serializable] private class MoveResultMessage { public string type = "move_result"; public bool success; public string instance_id; public string message; }
     [Serializable] private class CameraPanMessage { public string type; public float dx; public float dz; }
     [Serializable] private class CameraZoomMessage { public string type; public float delta; }
@@ -93,7 +110,15 @@ public class FurnitureSyncManager : MonoBehaviour
     // --- PAINT MESSAGES ---
     [Serializable] private class TogglePaintMessage { public string type; public bool active; }
     [Serializable] private class ApplyColorMessage { public string type; public string color; }
-    [Serializable] private class SelectWallMessage { public string type; public float viewport_x; public float viewport_y; }
+
+    [Serializable]
+    private class SelectWallMessage
+    {
+        public string type;
+        public float viewport_x; public float viewport_y;
+        public float x; public float y;
+    }
+
     [Serializable] private class WallSelectionMessage { public string type = "wall_selection"; public int count; }
 
     [Serializable]
@@ -133,7 +158,7 @@ public class FurnitureSyncManager : MonoBehaviour
         _frameTexture = new Texture2D(streamWidth, streamHeight, TextureFormat.RGB24, false);
         _frameRenderTexture = new RenderTexture(streamWidth, streamHeight, 24);
 
-        if (autoLoadPlacedInstancesOnStart && FindObjectOfType<FloorplanLoader>() == null) LoadPlacedInstancesIfPresent();
+        if (autoLoadPlacedInstancesOnStart && FindAnyObjectByType<FloorplanLoader>() == null) LoadPlacedInstancesIfPresent();
 
         if (streamCamera != null)
         {
@@ -327,20 +352,38 @@ public class FurnitureSyncManager : MonoBehaviour
 #if UNITY_EDITOR
         return AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
 #else
-        return Resources.Load<GameObject>(StripToResourcesRelativePath(prefabPath));
-#endif
-    }
+        // The path coming from the DB is like "Assets/Furniture/Bed/Bunkbedsc.prefab"
+        // But on Android, Resources.Load needs exactly "Furniture/Bed/Bunkbedsc"
+        
+        string path = prefabPath;
+        
+        // 1. Remove "Assets/" from the start
+        if (path.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+            path = path.Substring(7);
+            
+        // 2. Remove "Resources/" if the DB happens to include it
+        if (path.StartsWith("Resources/", StringComparison.OrdinalIgnoreCase))
+            path = path.Substring(10);
+            
+        // 3. Remove ".prefab" extension
+        if (path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase))
+            path = path.Substring(0, path.Length - 7);
 
-#if !UNITY_EDITOR
-    private string StripToResourcesRelativePath(string assetPath)
-    {
-        const string marker = "Resources/";
-        int idx = assetPath.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
-        string relative = idx >= 0 ? assetPath.Substring(idx + marker.Length) : assetPath;
-        if (relative.EndsWith(".prefab")) relative = relative.Substring(0, relative.Length - ".prefab".Length);
-        return relative;
-    }
+        // 4. Attempt to load
+        GameObject loadedPrefab = Resources.Load<GameObject>(path);
+        
+        if (loadedPrefab == null)
+        {
+            Debug.LogError($"[FurnitureSync] FATAL: Could not find prefab at Resources/{path} (Original path: {prefabPath})");
+        }
+        else
+        {
+            Debug.Log($"[FurnitureSync] SUCCESS: Found prefab at Resources/{path}");
+        }
+        
+        return loadedPrefab;
 #endif
+    }
 
     private void ApplySwap(SwapFurnitureMessage msg)
     {
@@ -367,10 +410,18 @@ public class FurnitureSyncManager : MonoBehaviour
     private void ApplyPlacement(PlaceFurnitureMessage msg)
     {
         if (msg == null || streamCamera == null) return;
-        var prefab = LoadPrefab(msg.prefab_path);
-        if (prefab == null) return;
 
-        Vector3 viewportPoint = new Vector3(msg.viewport_x, 1f - msg.viewport_y, 0f);
+        var prefab = LoadPrefab(msg.prefab_path);
+        if (prefab == null)
+        {
+            _ = SendJson(new PlaceResultMessage { success = false, instance_id = msg.instance_id, message = "Prefab not found: " + msg.prefab_path });
+            return;
+        }
+
+        float vx = msg.viewport_x != 0 ? msg.viewport_x : msg.x;
+        float vy = msg.viewport_y != 0 ? msg.viewport_y : msg.y;
+
+        Vector3 viewportPoint = new Vector3(vx, 1f - vy, 0f);
         Ray ray = streamCamera.ViewportPointToRay(viewportPoint);
 
         if (Physics.Raycast(ray, out RaycastHit hit, raycastMaxDistance, floorLayerMask))
@@ -390,6 +441,11 @@ public class FurnitureSyncManager : MonoBehaviour
 
             if (autoSavePlacedInstances) SavePlacedInstances();
         }
+        else
+        {
+            Debug.LogWarning("[FurnitureSync] Raycast missed the floor! Check the Floor Layer Mask and ensure the house has colliders.");
+            _ = SendJson(new PlaceResultMessage { success = false, instance_id = msg.instance_id, message = "Drop point didn't land on the floor" });
+        }
     }
 
     private void ApplyMove(MoveFurnitureMessage msg)
@@ -397,8 +453,12 @@ public class FurnitureSyncManager : MonoBehaviour
         if (msg == null || streamCamera == null) return;
         if (!_placedInstances.TryGetValue(msg.instance_id, out var go) || go == null) return;
 
-        Vector3 viewportPoint = new Vector3(msg.viewport_x, 1f - msg.viewport_y, 0f);
+        float vx = msg.viewport_x != 0 ? msg.viewport_x : msg.x;
+        float vy = msg.viewport_y != 0 ? msg.viewport_y : msg.y;
+
+        Vector3 viewportPoint = new Vector3(vx, 1f - vy, 0f);
         Ray ray = streamCamera.ViewportPointToRay(viewportPoint);
+
         if (Physics.Raycast(ray, out RaycastHit hit, raycastMaxDistance, floorLayerMask))
         {
             go.transform.position = hit.point;
@@ -551,7 +611,7 @@ public class FurnitureSyncManager : MonoBehaviour
         Bounds? result = null;
         void Encapsulate(Bounds bb) { if (result == null) result = bb; else { var r = result.Value; r.Encapsulate(bb); result = r; } }
         foreach (var kvp in _placedInstances) { if (kvp.Value == null) continue; foreach (var r in kvp.Value.GetComponentsInChildren<Renderer>()) Encapsulate(r.bounds); }
-        foreach (var r in FindObjectsOfType<Renderer>()) { if (((1 << r.gameObject.layer) & floorLayerMask) != 0) Encapsulate(r.bounds); }
+        foreach (var r in FindObjectsByType<Renderer>(FindObjectsSortMode.None)) { if (((1 << r.gameObject.layer) & floorLayerMask) != 0) Encapsulate(r.bounds); }
         return result;
     }
 
@@ -586,10 +646,6 @@ public class FurnitureSyncManager : MonoBehaviour
 
             Vector3 vp = streamCamera.WorldToViewportPoint(kvp.Value.transform.position);
 
-            // --- DEBUGGING ---
-            // Temporarily comment out the vp.z < 0 check to force the dots to send
-            // if (vp.z < 0) continue; 
-
             var slot = kvp.Value.GetComponent<FurnitureSlot>();
             Vector3 worldPos = kvp.Value.transform.position;
             list.Add(new InstanceInfo
@@ -609,9 +665,6 @@ public class FurnitureSyncManager : MonoBehaviour
                 scale_multiplier = slot && slot.scaleMultiplier > 0f ? slot.scaleMultiplier : 1f,
             });
         }
-
-        // ADD THIS LOG
-        Debug.Log($"[FurnitureSync] Sending {list.Count} instances to React.");
 
         _ = SendJson(new InstancesMessage { items = list.ToArray() });
     }
@@ -687,7 +740,7 @@ public class FurnitureSyncManager : MonoBehaviour
 
     private void SaveLayoutAndSignalVr()
     {
-        var allSlots = FindObjectsOfType<FurnitureSlot>();
+        var allSlots = FindObjectsByType<FurnitureSlot>(FindObjectsSortMode.None);
         var entries = new List<FurnitureLayoutEntry>();
         foreach (var slot in allSlots)
         {
@@ -732,22 +785,23 @@ public class FurnitureSyncManager : MonoBehaviour
     {
         if (!_isPaintMode || streamCamera == null) return;
 
-        // Prevent double-click deselect
         if (Time.time - _lastWallSelectTime < 0.2f) return;
         _lastWallSelectTime = Time.time;
 
-        Vector3 viewportPoint = new Vector3(msg.viewport_x, 1f - msg.viewport_y, 0f);
+        float vx = msg.viewport_x != 0 ? msg.viewport_x : msg.x;
+        float vy = msg.viewport_y != 0 ? msg.viewport_y : msg.y;
+
+        Vector3 viewportPoint = new Vector3(vx, 1f - vy, 0f);
         Ray ray = streamCamera.ViewportPointToRay(viewportPoint);
 
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, wallLayerMask))
         {
-            // Walk up the hierarchy to find the correct root parent (e.g. "Wall_W001")
             Transform root = hit.collider.transform;
             while (root.parent != null)
             {
                 if (root.name.StartsWith("Wall_") || root.name.StartsWith("Window_") || root.name.StartsWith("Door_"))
                 {
-                    break; // Found the root
+                    break;
                 }
                 root = root.parent;
             }
@@ -768,20 +822,18 @@ public class FurnitureSyncManager : MonoBehaviour
 
         if (_selectedWalls.Contains(wallRoot))
         {
-            // Deselect: Restore original color
             _selectedWalls.Remove(wallRoot);
             if (_originalWallColors.TryGetValue(wallRoot, out Color original))
             {
                 foreach (var r in renderers)
                 {
                     r.material.color = original;
-                    r.material.SetColor("_EmissionColor", Color.black); // Turn off glow
+                    r.material.SetColor("_EmissionColor", Color.black);
                 }
             }
         }
         else
         {
-            // Select: Highlight with a BRIGHT CYAN glow
             _selectedWalls.Add(wallRoot);
             if (!_originalWallColors.ContainsKey(wallRoot))
                 _originalWallColors[wallRoot] = renderers[0].material.color;
@@ -808,7 +860,7 @@ public class FurnitureSyncManager : MonoBehaviour
                 foreach (var r in renderers)
                 {
                     r.material.color = color;
-                    r.material.SetColor("_EmissionColor", Color.black); // Turn off glow after painting
+                    r.material.SetColor("_EmissionColor", Color.black);
                 }
                 _originalWallColors[wallRoot] = color;
             }
