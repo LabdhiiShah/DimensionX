@@ -190,7 +190,7 @@
 
 .admin-table-scroll {
   width: 100%;
-  overflow-x: auto;
+  overflow: visible; 
 }
 
 .admin-table {
@@ -738,4 +738,9 @@
   background: var(--dx-burgundy);
   color: #ffffff;
   box-shadow: 0 4px 10px rgba(128, 10, 29, 0.2);
+}
+/* If the kebab menu is on the last row, flip it to open upwards */
+.admin-table tbody tr:last-child .kebab-menu {
+  top: auto;
+  bottom: 85%;
 }

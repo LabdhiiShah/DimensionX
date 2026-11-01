@@ -5,7 +5,7 @@ import DashboardPage from './DashboardPage.jsx';
 import DesignPage from './DesignPage.jsx';
 import VrPage from './VrPage.jsx';
 import { useBridgeSocket } from '../hooks/useBridgeSocket.js';
-import { clearSession, projectsApi } from '../lib/api.js'; // <-- Import projectsApi
+import { clearSession, projectsApi, getUser } from '../lib/api.js';
 
 const BRIDGE_URL = import.meta.env.VITE_BRIDGE_URL || 'ws://localhost:8765';
 const ASSET_ORIGIN = (import.meta.env.VITE_ASSET_ORIGIN || import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
@@ -13,6 +13,7 @@ const ASSET_ORIGIN = (import.meta.env.VITE_ASSET_ORIGIN || import.meta.env.VITE_
 export default function StudioPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const user = getUser();
   const project = state?.project;
   
   // Fallback to the database fields if state wasn't passed
@@ -85,7 +86,7 @@ export default function StudioPage() {
         onLogout={logout}
       />
       <div className="page" style={{ marginBottom: -10 }}>
-        <button className="back-link" onClick={() => navigate('/projects')}>&larr; All projects</button>
+        <button className="back-link" onClick={() => navigate(user?.isAdmin ? '/admin' : '/projects')}>&larr; All projects</button>
         {project && <span className="studio-hint"> {project.projectName} for {project.clientName}</span>}
       </div>
       

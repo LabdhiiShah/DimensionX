@@ -1,9 +1,9 @@
 // The website's D-pad. These messages only ever move the Interior Camera in Unity
 // (the bridge never forwards them to the VR camera).
 export default function CameraControls({ send }) {
-  const pan = (dx, dz) => send({ type: 'camera_pan', dx, dz });
+  const pan = (dx, dz) => send({ type: 'camera_pan', dx: -dx, dz: -dz });
   const zoom = (delta) => send({ type: 'camera_zoom', delta });
-  const rotate = (degrees) => send({ type: 'camera_rotate', degrees });
+  const rotate = (degrees) => send({ type: 'camera_rotate', degrees: -degrees });
 
   return (
     <div className="cam-controls" aria-label="Camera controls">

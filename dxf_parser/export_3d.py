@@ -28,11 +28,18 @@ WALL_PALETTE = [
 ]
 
 MATERIALS = {
-    "DX_Floor":   (0.48, 0.45, 0.40),
+    # Changed Floor to pure white
+    "DX_Floor":   (1.0, 1.0, 1.0),       
     "DX_Door":    (0.48, 0.29, 0.16),
-    "DX_Window":  (0.10, 0.32, 0.45),
+    "DX_Window":  (0.10, 0.32, 0.45),      
     "DX_Balcony": (0.42, 0.42, 0.40),
     "DX_Roof":    (0.57, 0.55, 0.52),
+
+    # -------- window dressing --------
+    "DX_WindowFrame": (0.50, 0.35, 0.20),  
+    "DX_WindowGlass": (0.72, 0.86, 0.94),  
+    "DX_Curtain":     (0.80, 0.74, 0.64),  
+    "DX_CurtainRod":  (0.55, 0.42, 0.25),  
 }
 
 
@@ -97,14 +104,32 @@ class ObjBuilder:
                 continue
 
             r, g, b = MATERIALS.get(data["material"], (0.8, 0.8, 0.8))
-            mesh.visual = trimesh.visual.TextureVisuals(
-                material=trimesh.visual.material.PBRMaterial(
+            is_glass  = (data["material"] == "DX_WindowGlass")
+            alpha     = 0.6 if is_glass else 1.0
+            roughness = 0.15 if is_glass else 0.85
+
+            try:
+                kwargs = dict(
                     name=data["material"],
-                    baseColorFactor=[r, g, b, 1.0],
+                    baseColorFactor=[r, g, b, alpha],
                     metallicFactor=0.0,
-                    roughnessFactor=0.85,
+                    roughnessFactor=roughness,
                 )
-            )
+                if is_glass:
+                    kwargs["alphaMode"] = "BLEND"
+                mesh.visual = trimesh.visual.TextureVisuals(
+                    material=trimesh.visual.material.PBRMaterial(**kwargs)
+                )
+            except TypeError:
+                # Older trimesh without alphaMode support → opaque fallback.
+                mesh.visual = trimesh.visual.TextureVisuals(
+                    material=trimesh.visual.material.PBRMaterial(
+                        name=data["material"],
+                        baseColorFactor=[r, g, b, 1.0],
+                        metallicFactor=0.0,
+                        roughnessFactor=0.85,
+                    )
+                )
             scene.add_geometry(mesh, node_name=name, geom_name=name)
 
         glb_path.parent.mkdir(parents=True, exist_ok=True)
@@ -203,6 +228,7 @@ def build_wall(b, wall, doors_by_wall, windows_by_wall, palette_index=0):
 
 
 def build_socket(b, opening, walls, mat, prefix):
+    """Simple flat panel used for doors (kept unchanged)."""
     wall = next((w for w in walls if w["id"] == opening["wall_id"]), None)
     if wall is None:
         return
@@ -216,6 +242,66 @@ def build_socket(b, opening, walls, mat, prefix):
     sill = opening.get("sill_height", 0.0) * FT_TO_M
     b.set_element(f"{prefix}_{opening['id']}", mat)
     add_box(b, cx, cy, sill + h_m / 2, w_m, SOCKET_THICK_M, h_m, angle)
+
+
+def build_window(b, win, walls):
+    """
+    Window geometry: casing trim + centre mullion + glass pane.
+    Curtains have been removed.
+    """
+    wall = next((w for w in walls if w["id"] == win["wall_id"]), None)
+    if wall is None:
+        return
+
+    angle = math.atan2(
+        wall["end"][1] - wall["start"][1],
+        wall["end"][0] - wall["start"][0],
+    )
+    ux, uy = math.cos(angle), math.sin(angle)      # along-wall unit vector
+
+    cx = win["center"][0] * FT_TO_M
+    cy = win["center"][1] * FT_TO_M
+    w  = win["width"]  * FT_TO_M
+    h  = win["height"] * FT_TO_M
+    sill = win.get("sill_height", 0.0) * FT_TO_M
+    wall_thk = wall["thickness"] * FT_TO_M
+
+    # ---- Tuning constants (metres) ----
+    FRAME_W = 0.06                                 # casing trim width
+    FRAME_D = wall_thk + 0.005                     # fills wall opening
+    GLASS_D = 0.008
+
+    # =========================================================================
+    # 1. Casing trim (surface frame) + centre mullion
+    # =========================================================================
+    b.set_element(f"Window_{win['id']}_Frame", "DX_WindowFrame")
+
+    # Bottom rail (extends under both jambs)
+    add_box(b, cx, cy, sill - FRAME_W / 2,
+            w + 2 * FRAME_W, FRAME_D, FRAME_W, angle)
+    # Top rail
+    add_box(b, cx, cy, sill + h + FRAME_W / 2,
+            w + 2 * FRAME_W, FRAME_D, FRAME_W, angle)
+    # Left jamb
+    add_box(b, cx - ux * (w / 2 + FRAME_W / 2),
+               cy - uy * (w / 2 + FRAME_W / 2),
+            sill + h / 2, FRAME_W, FRAME_D, h, angle)
+    # Right jamb
+    add_box(b, cx + ux * (w / 2 + FRAME_W / 2),
+               cy + uy * (w / 2 + FRAME_W / 2),
+            sill + h / 2, FRAME_W, FRAME_D, h, angle)
+    # Vertical mullion in the middle
+    add_box(b, cx, cy, sill + h / 2,
+            FRAME_W * 0.55, FRAME_D * 0.90, h - 2 * FRAME_W, angle)
+
+    # =========================================================================
+    # 2. Glass pane (fills the inner opening)
+    # =========================================================================
+    b.set_element(f"Window_{win['id']}_Glass", "DX_WindowGlass")
+    add_box(b, cx, cy, sill + h / 2,
+            w - 0.02, GLASS_D, h - 0.02, angle)
+
+    # Curtains removed per user request.
 
 
 def export_plan(json_path: Path, out_dir: Path):
@@ -258,9 +344,9 @@ def export_plan(json_path: Path, out_dir: Path):
     for d in data.get("doors", []):
         build_socket(b, d, data["walls"], "DX_Door", "Door")
 
-    # --- WINDOWS ---
+    # --- WINDOWS (frame + glass) ---
     for win in data.get("windows", []):
-        build_socket(b, win, data["walls"], "DX_Window", "Window")
+        build_window(b, win, data["walls"])
 
     # --- BALCONIES ---
     for bal in data.get("balconies", []) or []:
@@ -274,6 +360,7 @@ def export_plan(json_path: Path, out_dir: Path):
     b.save_glb(glb_path)
     print(f"  {json_path.name} -> {plan_id}.glb "
           f"({len(b.elements)} elements, {sum(len(e['verts']) for e in b.elements.values())} verts)")
+
 
 def main():
     if len(sys.argv) < 2:
