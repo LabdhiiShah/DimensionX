@@ -797,13 +797,28 @@ public class FurnitureSyncManager : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, wallLayerMask))
         {
             Transform root = hit.collider.transform;
+
+            // SAFETY CHECK: Do not select the floor, roof, or the root house object
+            if (root.name == "Floor" || root.name == "Roof" || root.name == "DX_House" || root.name == "Scene")
+            {
+                return;
+            }
+
+            bool foundSpecificWall = false;
             while (root.parent != null)
             {
                 if (root.name.StartsWith("Wall_") || root.name.StartsWith("Window_") || root.name.StartsWith("Door_"))
                 {
+                    foundSpecificWall = true;
                     break;
                 }
                 root = root.parent;
+            }
+
+            // If we didn't find a specific wall, just use the mesh we hit directly
+            if (!foundSpecificWall)
+            {
+                root = hit.collider.transform;
             }
 
             Debug.Log($"[FurnitureSync] Selected: {root.name}");
