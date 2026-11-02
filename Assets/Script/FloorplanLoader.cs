@@ -90,7 +90,7 @@ public class FloorplanLoader : MonoBehaviour
 
     private async Task LoadHouse(LoadFloorplanMessage msg)
     {
-        if (msg.glb_url == _loadedUrl) { Report("ready", "House already loaded", msg.glb_url); return; }
+        if (msg.glb_url == _loadedUrl && _root != null) { Report("ready", "House already loaded", msg.glb_url); return; }
         if (msg.glb_url == _loadingUrl) return;
 
         _loadingUrl = msg.glb_url;
@@ -144,8 +144,16 @@ public class FloorplanLoader : MonoBehaviour
             Destroy(_root);
         }
         _gltf?.Dispose();
-        foreach (var go in hideOnLoad) if (go != null) go.SetActive(false);
-
+        if (hideOnLoad != null)
+            {
+                foreach (GameObject obj in hideOnLoad)
+                {
+                    if (obj != null)
+                    {
+                        obj.SetActive(false);
+                    }
+                }
+            }
         _root = root;
         _gltf = gltf;
         HouseBounds = ComputeHouseBounds(root);

@@ -6,10 +6,10 @@ using UnityEngine;
 
 public class FurnitureThumbnailExporter : EditorWindow
 {
-    private const string FurnitureFolder = "Assets/Furniture";
+    private const string FurnitureFolder = "Assets/Resources/Furniture";
 
     private const string OutputFolder =
-        @"C:\Users\saumy\Downloads\dimxfull\dimx-website\client\public\furniture";
+        @"C:\Users\saumy\Downloads\DimensionsXWebsite\client\public\furniture";
 
     private string[] prefabGuids;
     private int currentIndex;

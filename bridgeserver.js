@@ -27,7 +27,7 @@ const VR_BUILD_PATH = process.env.VR_BUILD_PATH || '';
 
 const wss = new WebSocket.Server({ port: PORT });
 const clients = new Map(); // ws -> role ("web" | "unity" | "unknown")
-
+let lastFloorplan = null;
 function broadcastTo(role, payload) {
   const message = JSON.stringify(payload);
   for (const [socket, r] of clients.entries()) {
@@ -71,16 +71,50 @@ wss.on('connection', (ws) => {
     }
 
     if (msg.type === 'hello' && (msg.role === 'web' || msg.role === 'unity' || msg.role === 'vr')) {
-      clients.set(ws, msg.role);
-      console.log(`[bridge] client identified as "${msg.role}"`);
-      ws.send(JSON.stringify({ type: 'hello_ack', role: msg.role }));
-      return;
-    }
+  clients.set(ws, msg.role);
+  console.log(`[bridge] client identified as "${msg.role}"`);
+  ws.send(JSON.stringify({ type: 'hello_ack', role: msg.role }));
+
+  if (msg.role === 'unity' && lastFloorplan) {
+    console.log('[bridge] sending saved floorplan to Unity');
+    ws.send(JSON.stringify(lastFloorplan));
+  }
+
+  return;
+}
 
     switch (msg.type) {
-      // Web -> Unity ONLY (these involve raycasting against whichever
-      // camera the click came from — the design camera — so they'd land
-      // in the wrong spot if also applied against the VR camera).
+      case 'load_floorplan':
+        console.log('[bridge] load_floorplan received from', clients.get(ws));
+
+        if (!msg.glb_url) {
+          console.error('[bridge] load_floorplan missing glb_url');
+          broadcastTo('web', {
+            type: 'floorplan_status',
+            state: 'error',
+            message: 'Missing GLB model URL'
+          });
+          break;
+        }
+
+        // Save the latest floorplan so Unity can receive it after reconnecting.
+        lastFloorplan = msg;
+
+        const unityConnected = [...clients.values()].includes('unity');
+
+        if (!unityConnected) {
+          console.log('[bridge] Unity is not connected; floorplan saved.');
+          broadcastTo('web', {
+            type: 'floorplan_status',
+            state: 'waiting',
+            message: 'Floorplan saved. Waiting for Unity to connect...'
+          });
+          break;
+        }
+
+        console.log('[bridge] load_floorplan -> unity:', msg.glb_url);
+        broadcastTo('unity', msg);
+        break;
       case 'swap_furniture':
       case 'place_furniture':
       case 'move_furniture':
@@ -108,6 +142,8 @@ wss.on('connection', (ws) => {
 
       // Unity/VR -> Web
       case 'swap_result':
+        case 'floorplan_status':
+      case 'wall_selection':
       case 'place_result':
       case 'move_result':
       case 'remove_result':
@@ -121,6 +157,8 @@ wss.on('connection', (ws) => {
       // Unity -> Web (high-frequency or carries a full image — don't log every one)
       case 'frame':
       case 'instances':
+      case 'floorplan_status':
+      case 'wall_selection':
       case 'floorplan_snapshot':
         broadcastTo('web', msg);
         break;
